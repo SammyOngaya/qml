@@ -1,4 +1,3 @@
-qml
 *.pyc 
 .env 
 .DS_Store
