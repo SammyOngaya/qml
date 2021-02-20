@@ -44,11 +44,11 @@
 <!-- Start Data Upload form -->
 
 {% block content %}
-
-<form method="post">
+<br />
+<form method="post" class="form-inline" enctype="multipart/form-data"  action="/data_file">
     <div class="form-group">
         <label for="file">Upload data from a csv</label>
-        <input type="file" name="data_fle_upload"
+        <input type="text" name="data_file"
                placeholder="Search file for upload" class="form-control"
                value="{{ request.form['file'] }}"></input>
     </div>
@@ -57,6 +57,7 @@
     </div>
 </form>
 {% endblock %}
+
 
 <!-- end data upload form -->
 

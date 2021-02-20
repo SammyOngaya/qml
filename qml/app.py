@@ -1,12 +1,8 @@
-from flask import Flask, render_template
+import dash
+import dash_bootstrap_components as dbc
 
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-
-if __name__ == "__main__":
-	app.run()   
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP],
+	   meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+    ])
+server=app.server
