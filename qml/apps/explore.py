@@ -5,11 +5,15 @@ import dash_core_components as dcc
 import dash_uploader as du
 from dash.dependencies import Input, Output,State
 import pandas as pd
+import pathlib
 
 from app import app, server
 
 
-du.configure_upload(app, r"../datasets")
+PATH=pathlib.Path(__file__).parent
+DATA_PATH=PATH.joinpath("../datasets").resolve()
+
+du.configure_upload(app, DATA_PATH)
 
 layout=dbc.Container([
 
