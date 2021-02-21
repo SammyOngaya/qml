@@ -2,11 +2,14 @@
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as dcc
+import dash_uploader as du
 from dash.dependencies import Input, Output,State
+import pandas as pd
 
 from app import app, server
 
 
+du.configure_upload(app, r"../datasets")
 
 layout=dbc.Container([
 
@@ -46,6 +49,7 @@ layout=dbc.Container([
    #2.
                       dbc.Col(html.Div([
                     html.H6("Explore your Raw Data") , 
+                    du.Upload(),
                     ]
                   ),
       style={
