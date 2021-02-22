@@ -7,8 +7,6 @@ from dash.dependencies import Input, Output,State
 import pandas as pd
 import pathlib
 import uuid
-import glob
-import os
 
 from app import app, server
 
@@ -48,8 +46,8 @@ layout=dbc.Container([
         dbc.Row(
             [
                 dbc.Col(html.Div([                  
-                   du.Upload( id='dash-uploader',
-                        max_file_size=2,  # 1800 Mb
+                   du.Upload( id='upload-file',
+                        max_file_size=2,  # 2 Mb max file size
                         filetypes=['csv', 'zip'],
                         # upload_id=uuid.uuid1(),  # Unique session id
                         text='Drag and Drop a File Here to upload!',
@@ -63,21 +61,20 @@ layout=dbc.Container([
                 	md=4),
    #2.
                       dbc.Col(html.Div([
-                    # html.H6("# Records :") , 
-                    html.Div(id='callback-output'),
+                    html.Div(id='output-stats'),
                    
                     
                     ]
                   ),
       style={
-            'margin-top': '30px'
+            'margin-top': '30px',
+            'font-size':'20px'
             },
                   md=4),
-   #3. doughnut_pie_chart_with_center
+   #3. 
                        dbc.Col(html.Div(
               [
                 # html.H6("Tweet Analysis") , 
-                # html.Div(id='callback-output'),
                    ]
                   ),
       style={
@@ -140,10 +137,10 @@ layout=dbc.Container([
 
 
 @app.callback(
-    Output('callback-output', 'children'),
-    [Input('dash-uploader', 'isCompleted')],
-    [State('dash-uploader', 'fileNames'),
-     State('dash-uploader', 'upload_id')],
+    Output('output-stats', 'children'),
+    [Input('upload-file', 'isCompleted')],
+    [State('upload-file', 'fileNames'),
+     State('upload-file', 'upload_id')],
 )
 def callback_on_completion(iscompleted, filenames, upload_id):
   data=[str(x) for x in filenames]
