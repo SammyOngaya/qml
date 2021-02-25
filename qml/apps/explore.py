@@ -52,7 +52,10 @@ layout=dbc.Container([
                         # upload_id=uuid.uuid1(),  # Unique session id
                         text='Drag and Drop a File Here to upload!',
                         text_completed='File Sucessfully Uploaded: ',
+                        # cancel_button=True, 
+                        # pause_button=True,
                            ),
+                   # dbc.Button("Submit", color="primary", active=True, className="mr-1",id="load-data"),
                   ] 
                 	),
 			style={
@@ -140,10 +143,13 @@ layout=dbc.Container([
     Output('output-stats', 'children'),
     [Input('upload-file', 'isCompleted')],
     [State('upload-file', 'fileNames'),
-     State('upload-file', 'upload_id')],
+     State('upload-file', 'upload_id')
+     ],
 )
+
 def callback_on_completion(iscompleted, filenames, upload_id):
   data=[str(x) for x in filenames]
   file=str(data).replace("['","").replace("']","")
   df=pd.read_csv(DATA_PATH.joinpath(file))
   return "# Records : "+str(df.shape[0])+" | # Attributes : "+str(df.shape[1])
+
