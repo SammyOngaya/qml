@@ -1,12 +1,36 @@
-# import dash
+# Dash dependencies import
+import dash
+import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
-import dash_core_components as dcc
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import dash_uploader as du
 from dash.dependencies import Input, Output,State
-import pandas as pd
 import pathlib
 import uuid
+import pandas as pd
+import numpy as np
+# px.defaults.template = "ggplot2"
+# End Dash dependencies import
+
+# # Data preprocessing 
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn.model_selection import train_test_split
+# from imblearn.over_sampling import SMOTE
+# # ML Algorithm
+# from sklearn.pipeline import Pipeline
+# from sklearn.model_selection import GridSearchCV
+# from sklearn.ensemble import RandomForestClassifier
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.svm import SVC
+# # Model evaluation
+# from sklearn.metrics import accuracy_score, precision_score, recall_score,f1_score,confusion_matrix,roc_curve,roc_auc_score
+# # Save model
+# import os
+# import joblib
+
 
 from app import app, server
 
@@ -113,13 +137,14 @@ dbc.Tab(
         dbc.Row(
             [
                 dbc.Col(html.Div([                  
-               html.H6("Data Exploration") , 
+               html.H6("Churn Distribution") , 
+               dcc.Graph(id='churn_distribution',figure={}),
                   ] 
                 	),
 			style={
             'margin-top': '30px'
             },
-                	md=4),
+                	md=6),
    #2.
                       dbc.Col(html.Div([
                     html.H6("Data Exploration") , 
@@ -374,17 +399,6 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
     ]
 )
 
-# tabs = dbc.Tabs(
-#     [
-#         dbc.Tab(tab1_content, label="Tab 1"),
-#         # dbc.Tab(tab2_content, label="Tab 2"),
-#         dbc.Tab(
-#             "This tab's content is never seen", label="Tab 3", disabled=False
-#         ),
-#     ]
-# )
-
-
 	],
 	fluid=True
 	)
@@ -392,6 +406,14 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
 
 
 
-        #     html.P("This is tab 1!", className="card-text"),
-        #     dbc.Button("Click here", color="success"),
-        # 
+
+## Data Exploration Callbacks
+@app.callback(
+Output('churn_distribution' , 'figure')
+)
+def churn_distribution():
+  attrition_df=df.groupby( [ "Churn"], as_index=False )["customerID"].count()
+  colors = ['skyblue','crimson']
+  doughnut_attrition = go.Figure(data=[go.Pie(labels=attrition_df['Churn'].tolist(), values=attrition_df['customerID'].tolist(), hole=.3)])
+  doughnut_attrition.update_layout(showlegend=False,autosize=True,annotations=[dict(text='Attrition',  font_size=20, showarrow=False)],margin=dict(t=0,b=0,l=0,r=0),height=350,colorway=colors)
+  return doughnut_attrition
