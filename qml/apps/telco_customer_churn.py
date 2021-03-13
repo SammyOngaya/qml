@@ -35,8 +35,12 @@ from app import app
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
-df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv"))
+TELCO_CHURN_MODEL_DATA_PATH=PATH.joinpath("../Notebooks/Churn Models").resolve()
 feat_importance_df=pd.read_csv(DATA_PATH.joinpath("feature-importance.csv"))
+df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv"))
+telco_churm_metrics_df=pd.read_json(TELCO_CHURN_MODEL_DATA_PATH.joinpath("model_metrics.json"), orient ='split', compression = 'infer')
+
+
 
 df['TotalCharges']=pd.to_numeric(df['TotalCharges'], errors='coerce')
 
@@ -162,11 +166,34 @@ def feature_correlation(df):
 
 def feature_importance(feat_importance_df):
   feat_importance_df=feat_importance_df.sort_values(by=['Importance'],ascending=False)
-  fig=px.bar(feat_importance_df.head(15),x='Features',y='Importance',text='Importance',color='Importance',height=650)
+  # feat_importance_df.columns=['Features','Importance']
+  fig=px.bar(feat_importance_df,x='Features',y='Importance',text='Importance',color='Importance',height=650)
   fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.01),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
   return fig
 
+def telco_churn_model_metrics_summary(telco_churm_metrics_df):
+  unpivoted_metric_df=telco_churm_metrics_df[telco_churm_metrics_df['Type']=='Metric'][['Model','Accuracy','Precision','Recall','F_1_Score','AUC_Score']]
+  unpivoted_metric_df=unpivoted_metric_df.melt(id_vars=['Model'], var_name='Metrics', value_name='Score').sort_values(by=['Score'],ascending=True)
+  colors = ['crimson','skyblue','teal','orange']
+  fig=px.bar(unpivoted_metric_df,x='Metrics',y='Score',color='Model',text='Score',color_discrete_sequence=colors,barmode="group")
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.01),autosize=True,margin=dict(t=0,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  return fig
 
+def uac_roc(telco_churm_metrics_df):
+  uac_roc_df=telco_churm_metrics_df[telco_churm_metrics_df['Type']=='ROC'][['Model','Confusion_Matrix_ROC']]
+  uac_roc_df=uac_roc_df.sort_values(by=['Model'],ascending=True)
+  uac_roc_df=uac_roc_df.set_index('Model').transpose()
+  uac_roc_fig = go.Figure()
+  uac_roc_fig.add_trace(go.Scatter(x=uac_roc_df['Logistic Regression FPR'][0], y=uac_roc_df['Logistic Regression TPR'][0],name='Logistic Regression',
+                                  line = dict(color='teal', width=2),line_shape='spline'))
+  uac_roc_fig.add_trace(go.Scatter(x=uac_roc_df['Random Forest FPR'][0], y=uac_roc_df['Random Forest TPR'][0],name='Random Forest',
+                                  line = dict(color='royalblue', width=2),line_shape='spline'))
+  uac_roc_fig.add_trace(go.Scatter(x=uac_roc_df['Support Vector Machine FPR'][0], y=uac_roc_df['Support Vector Machine TPR'][0],name='Support Vector Machine',
+                                  line = dict(color='orange', width=2),line_shape='spline'))
+  uac_roc_fig.add_trace(go.Scatter(x=np.array([0., 1.]), y=np.array([0., 1.]),name='Random Gues',
+                                  line = dict(color='firebrick', width=4, dash='dash')))
+  uac_roc_fig.update_layout(legend=dict(yanchor="bottom",y=0.05,xanchor="right",x=0.95),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
+  return uac_roc_fig
 
 
 layout=dbc.Container([
@@ -441,7 +468,7 @@ dbc.Tab(
             dbc.Col(html.Div([                  
                     dcc.Graph(
                             id='feature-importance',
-                            figure=feature_importance(df),
+                            figure=feature_importance(feat_importance_df),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -451,6 +478,36 @@ dbc.Tab(
                                 },
                           md=12),
 
+            ]
+        ),
+
+         dbc.Row(
+            [ 
+             dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='uac-roc',
+                            figure=uac_roc(telco_churm_metrics_df),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+             
+            dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='telco-churn-model-metrics-summary',
+                            figure=telco_churn_model_metrics_summary(telco_churm_metrics_df),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
             ]
         ),
 
