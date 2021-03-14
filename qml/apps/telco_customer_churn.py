@@ -195,6 +195,45 @@ def uac_roc(telco_churm_metrics_df):
   uac_roc_fig.update_layout(legend=dict(yanchor="bottom",y=0.05,xanchor="right",x=0.95),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
   return uac_roc_fig
 
+def random_forest_confusion_matrix(telco_churm_metrics_df):
+  con_matrix_df=telco_churm_metrics_df[telco_churm_metrics_df['Type']=='Confusion_Matrix'][['Model','Confusion_Matrix_ROC']]
+  con_matrix_df.reset_index(level=0, inplace=True)
+  random_f_z=con_matrix_df['Confusion_Matrix_ROC'][1]
+  random_f_z= random_f_z[::-1]
+  x=['TP','FP']
+  y =  x[::-1].copy()
+  random_f_z_text = [[str(y) for y in x] for x in random_f_z]
+  colorscale = [[0, 'orange'], [1, 'teal']]
+  font_colors = ['white', 'black']
+  fig = ff.create_annotated_heatmap(random_f_z,x=x, y=y, annotation_text=random_f_z_text,  hoverinfo='z',colorscale=colorscale)
+  fig.update_layout(title_text='Random Forest',autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+  return fig
+
+def logistic_regression_confusion_matrix(telco_churm_metrics_df):
+  con_matrix_df=telco_churm_metrics_df[telco_churm_metrics_df['Type']=='Confusion_Matrix'][['Model','Confusion_Matrix_ROC']]
+  con_matrix_df.reset_index(level=0, inplace=True)
+  logistic_z=con_matrix_df['Confusion_Matrix_ROC'][0]
+  logistic_z= logistic_z[::-1]
+  x=['TP','FP']
+  y =  x[::-1].copy()
+  logistic_z_text = [[str(y) for y in x] for x in logistic_z]
+  colorscale = [[0, 'skyblue'], [1, 'green']]
+  fig = ff.create_annotated_heatmap(logistic_z,x=x, y=y, annotation_text=logistic_z_text,  hoverinfo='z',colorscale=colorscale)
+  fig.update_layout(title_text='Logistic Regression',autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+  return fig
+
+def svm_confusion_matrix(telco_churm_metrics_df):
+  con_matrix_df=telco_churm_metrics_df[telco_churm_metrics_df['Type']=='Confusion_Matrix'][['Model','Confusion_Matrix_ROC']]
+  con_matrix_df.reset_index(level=0, inplace=True)
+  svm_z=con_matrix_df['Confusion_Matrix_ROC'][2]
+  svm_z= svm_z[::-1]
+  x=['TP','FP']
+  y =  x[::-1].copy()
+  svm_z_text = [[str(y) for y in x] for x in svm_z]
+  colorscale = [[0, 'crimson'], [1, 'green']]
+  fig = ff.create_annotated_heatmap(svm_z,x=x, y=y, annotation_text=svm_z_text,  hoverinfo='z',colorscale='rainbow')
+  fig.update_layout(title_text='Support Vector Machine',autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+  return fig
 
 layout=dbc.Container([
 
@@ -495,7 +534,60 @@ dbc.Tab(
                                 'margin-top': '30px'
                                 },
                           md=6),
-             
+
+            dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='random-forest-confusion-matrix',
+                            figure=random_forest_confusion_matrix(telco_churm_metrics_df),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+            ]
+        ),
+
+
+    dbc.Row(
+            [ 
+
+
+            dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='logistic-regression-confusion-matrix',
+                            figure=logistic_regression_confusion_matrix(telco_churm_metrics_df),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+
+             dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='svm-confusion-matrix',
+                            figure=svm_confusion_matrix(telco_churm_metrics_df),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+            ]
+        ),
+
+
+
+
+  dbc.Row(
+            [ 
             dbc.Col(html.Div([                  
                     dcc.Graph(
                             id='telco-churn-model-metrics-summary',
@@ -507,9 +599,10 @@ dbc.Tab(
                           style={
                                 'margin-top': '30px'
                                 },
-                          md=6),
+                          md=12),
             ]
         ),
+
 
        
         # footer
