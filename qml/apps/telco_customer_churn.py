@@ -636,24 +636,161 @@ dbc.Tab(
     #1.
         dbc.Row(
             [
-                dbc.Col(html.Div([                  
-               html.H6("Ml Prediction") , 
-                  ] 
-                  ),
+               dbc.Col(
+
+                html.Div(
+                          [
+                              # dcc.Dropdown(id='my-dpdn', multi=False, value='AMZN',
+                              #         options=[{'label':x,'value':x} for x in sorted(df['Symbols'].unique())],
+                              #         style={'margin-bottom': '15px'}),
+                              dcc.Dropdown(
+                                      id="gender-input", placeholder="Select Gender...", options=[
+                                          {"label": "Male", "value": "Male"},
+                                          {"label": "Female", "value": "Female"},
+                                          ],          
+                                            ),
+                              html.Br(),
+                              dcc.Dropdown(
+                                      id="citizen-input", placeholder="Select Citizen Seniority...", options=[
+                                          {"label": "Senior", "value": "1"},
+                                          {"label": "Junior", "value": "0"},
+                                          ],           
+                                            ),
+                              html.Br(),
+                                 dcc.Dropdown(
+                                      id="partner-input", placeholder="Select Partner...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],           
+                                            ),
+                              html.Br(),
+                               dcc.Dropdown(
+                                      id="dependents-input", placeholder="Select Dependents...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],          
+                                            ),
+                              html.Br(),
+                              dcc.Dropdown(
+                                      id="phone-service-input", placeholder="Select Phone Service...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],          
+                                            ),
+                              html.Br(),
+                               dcc.Dropdown(
+                                      id="multipleLines-input", placeholder="Select Multiple lines...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],           
+                                            ),
+                              html.Br(),
+                              dbc.Input(id="tenure-input", placeholder="Enter Tenure...", type="Number", min=0, max=100),
+                              
+
+                          ]
+                      ),
       style={
             'margin-top': '30px'
             },
                   md=4),
    #2.
-                      dbc.Col(html.Div([
-                    html.H6("Ml Prediction") , 
-                   
-                    
-                    ]
-                  ),
+               dbc.Col(
+
+                html.Div(
+                          [
+                              dcc.Dropdown(
+                                      id="internet-service-input", placeholder="Select Internet Service...", options=[
+                                          {"label": "DSL", "value": "DSL"},
+                                          {"label": "Female", "value": "Female"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                              dcc.Dropdown(
+                                      id="online-security-input", placeholder="Select Online Security...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                                 dcc.Dropdown(
+                                      id="online-backup-input", placeholder="Select Online backup...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                               dcc.Dropdown(
+                                      id="device-protection-input", placeholder="Select Device Protection...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                              dcc.Dropdown(
+                                      id="techsupport-input", placeholder="Select Tech Support...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                               dcc.Dropdown(
+                                      id="streaming-tv-input", placeholder="Select Streaming Tv...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                              dbc.Button("predict", id="predict-input", className="mr-2"),
+
+                          ]
+                      ),
       style={
-            'margin-top': '30px',
-            'font-size':'20px'
+            'margin-top': '30px'
+            },
+                  md=4),
+
+                dbc.Col(
+
+                html.Div(
+                          [
+                              dcc.Dropdown(
+                                      id="streaming-movies-input", placeholder="Select Streaming Movies...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                              dcc.Dropdown(
+                                      id="contract-input", placeholder="Select Contract Type...", options=[
+                                          {"label": "One year", "value": "One year"},
+                                          {"label": "Month-to-Month", "value": "Month-to-Month"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                                 dcc.Dropdown(
+                                      id="paperless-billing-input", placeholder="Select Paperless Billing...", options=[
+                                          {"label": "Yes", "value": "Yes"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              html.Br(),
+                               dcc.Dropdown(
+                                      id="payment-method-input", placeholder="Select Payment Method...", options=[
+                                          {"label": "Electronic check", "value": "Electronic check"},
+                                          {"label": "No", "value": "No"},
+                                          ],style={'margin-bottom': '5px'}            
+                                            ),
+                              
+                              html.Br(),
+                              dbc.Input(id="monthly-charges-input", placeholder="Enter Monthly Charges...", type="Number", min=0, max=1000000),
+                              html.Br(),
+                              dbc.Input(id="total-charges-input", placeholder="Enter Total Charges...", type="Number", min=0, max=10000000),
+                              
+                          ]
+                      ),
+      style={
+            'margin-top': '30px'
             },
                   md=4),
    #3. 
@@ -674,21 +811,10 @@ dbc.Tab(
         dbc.Row(
             [
                         dbc.Col(html.Div(
-     html.H6("Ml Prediction") , 
+     # html.Span(id="example-output", style={"vertical-align": "middle"}), 
+     dbc.Alert(id="example-output", color="success"),
                   ),
-                  md=4),
-
-    #5. 
-                   dbc.Col(html.Div(
-     html.H6("Ml Prediction") , 
-                  ),
-                  md=4),
-
-    # 6
-                         dbc.Col(html.Div( 
-html.H6("Ml Prediction") , 
-                  ),
-                  md=4),
+                  md=12),
             ]
         ),
      
@@ -728,3 +854,22 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
 
 
 
+@app.callback(
+    Output("example-output", "children"), 
+    Input("predict-input", "n_clicks"),
+    [State("gender-input", "value"),
+    State("citizen-input","value"),
+    State("partner-input","value"),
+    State("dependents-input","value"),
+    State("phone-service-input","value"),
+    State("tenure-input","value")]
+    ,
+    prevent_initial_call=False
+)
+def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure):
+   return f"Selected: {str(gender)},  {str(citizen)}, {str(partner)},{str(dependents)},{str(phone_service)},{int(tenure)}."
+    # if n is None:
+    #     return "Enter all values"
+    # else:
+        # return f"Clicked {int(salary)} times and {str(gender)}."
+        # return gender
