@@ -39,7 +39,7 @@ TELCO_CHURN_MODEL_DATA_PATH=PATH.joinpath("../Notebooks/Churn Models").resolve()
 feat_importance_df=pd.read_csv(DATA_PATH.joinpath("feature-importance.csv"))
 df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv"))
 telco_churm_metrics_df=pd.read_json(TELCO_CHURN_MODEL_DATA_PATH.joinpath("model_metrics.json"), orient ='split', compression = 'infer')
-
+joblib_model = joblib.load(TELCO_CHURN_MODEL_DATA_PATH.joinpath("best_gridsearch_model_pipeline.pkl"))
 
 
 df['TotalCharges']=pd.to_numeric(df['TotalCharges'], errors='coerce')
@@ -662,8 +662,8 @@ dbc.Tab(
                               html.Br(),
                               dcc.Dropdown(
                                       id="citizen-input", placeholder="Select Citizen Seniority...", options=[
-                                          {"label": "Senior", "value": "1"},
-                                          {"label": "Junior", "value": "0"},
+                                          {"label": "Senior", "value": "1.0"},
+                                          {"label": "Junior", "value": "0.0"},
                                           ],           
                                             ),
                               html.Br(),
@@ -893,18 +893,61 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
 def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,multiple_lines,internet_service,online_security,online_backup,
                     device_protection,techsupport,streaming_tv,streaming_movies,contract,paperless_billing,payment_method,
                     monthly_charges,total_charges):
-  pred_dict={"ID":"1","gender":str(gender), "SeniorCitizen":str(citizen),"Partner":str(partner),"Dependents":str(dependents),
+  pred_dict={"ID":"1","gender":str(gender), "SeniorCitizen":float(citizen),"Partner":str(partner),"Dependents":str(dependents),
   "tenure":int(tenure),"PhoneService":str(phone_service),"MultipleLines":str(multiple_lines),"InternetService":str(internet_service),"OnlineSecurity":str(online_security),
   "OnlineBackup":str(online_backup), "DeviceProtection":str(device_protection),"TechSupport":str(techsupport),"StreamingTV":str(streaming_tv),
   "StreamingMovies":str(streaming_movies),"Contract":str(contract),"PaperlessBilling":str(paperless_billing),"PaymentMethod":str(payment_method),
-  "MonthlyCharges":int(monthly_charges),"TotalCharges":int(total_charges) }
+  "MonthlyCharges":float(monthly_charges),"TotalCharges":float(total_charges) }
   pred_columns=['ID','gender', 'SeniorCitizen', 'Partner', 'Dependents','tenure', 'PhoneService', 'MultipleLines', 'InternetService',
        'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport','StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
        'PaymentMethod', 'MonthlyCharges', 'TotalCharges']
-  pred_df=pd.DataFrame(pred_dict,columns=pred_columns,index=['ID'])
-  pred_df.to_csv(DATA_PATH.joinpath("telco_pred_data.csv"))
-  return f"{pred_dict}"
+  pred_data=pd.DataFrame(pred_dict,columns=pred_columns, index=[0])
+  pred_data.to_csv(DATA_PATH.joinpath("telco_pred_data.csv")) # for reference
+
+  # df=pd.read_csv("../datasets/telco-customer-churn.csv")
+  df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv"))
+  # pred_data.drop(pred_data.columns[0], axis = 1, inplace = True) 
+  df.set_index("customerID", inplace = True)
+  # pred_data.set_index("ID", inplace = True)
+  df=df.drop(columns=['Churn'])
+  df['TotalCharges']=pd.to_numeric(df['TotalCharges'], errors='coerce')
+  # pred_data=pd.read_csv('../datasets/telco_pred_data.csv',index_col=['ID'])
+  
+  # print(pred_data)
+  # pred_data=pred_data.drop(columns=['Unnamed: 0'])
+  pred_df=df.append(pred_data)
+  pred_df['SeniorCitizen']=pred_df['SeniorCitizen'].fillna(pred_df['SeniorCitizen'].max())
+  pred_df['SeniorCitizen']=pred_df['SeniorCitizen'].apply(np.int64)
+  # print(pred_df)
+
+
+  pred_df_columns=['gender','Partner','Dependents','PhoneService','MultipleLines','InternetService','OnlineSecurity','OnlineBackup','DeviceProtection', 'TechSupport', 'StreamingTV','StreamingMovies','Contract', 'PaperlessBilling', 'PaymentMethod','SeniorCitizen']
+  pred_df=pd.get_dummies(pred_df,columns=pred_df_columns)
+  # pred_df.shape
+
+  pred_mms_columns=['tenure','MonthlyCharges','TotalCharges']
+  pred_mms_df=pd.DataFrame(pred_df,columns=pred_mms_columns)
+  pred_df=pred_df.drop(columns=pred_mms_columns)
+
+  pred_rescaled_features=MinMaxScaler().fit_transform(pred_mms_df)
+  pred_rescaled_df=pd.DataFrame(pred_rescaled_features,columns=pred_mms_columns,index=pred_df.index)
+  pred_df=pd.concat([pred_df,pred_rescaled_df],axis=1)
+
+  pred_df= pred_df.sort_index(axis=1)
+  pred_df=pred_df.dropna()
+  pred_df=pred_df.iloc[:,1:]
+  # Load from file
+  # joblib_model = joblib.load(dump_file)
+
+  predict_probability=joblib_model.predict_proba(pred_df.tail(1))
+  # print(predict_probability)
+  prediction = joblib_model.predict(pred_df.tail(1))[0]
+  # prediction[0]
+
+
+  return f"Predicted : {prediction} With Confidence of {predict_probability}."
     # if n is None:
     #     return "Enter all values"
         # return f"Clicked {int(salary)} times and {str(gender)}."
         # return gender
+        # "MultipleLines":str(multiple_lines),
