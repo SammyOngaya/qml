@@ -1,0 +1,2 @@
+,ID,gender,SeniorCitizen,Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges
+ID,1,Male,0,Yes,No,4,Yes,,Fiber optic,Yes,Yes,No internet service,Yes,Yes,Yes,Month-to-month,Yes,Electronic check,2000,6500

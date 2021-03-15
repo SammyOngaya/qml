@@ -873,6 +873,7 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
     State("dependents-input","value"),
     State("phone-service-input","value"),
     State("tenure-input","value"),
+    State("multipleLines-input","value"),
     State("internet-service-input","value"),
     State("online-security-input","value"),
     State("online-backup-input","value"),
@@ -889,19 +890,19 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
     ,
     prevent_initial_call=False
 )
-def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,internet_service,online_security,online_backup,
+def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,multiple_lines,internet_service,online_security,online_backup,
                     device_protection,techsupport,streaming_tv,streaming_movies,contract,paperless_billing,payment_method,
                     monthly_charges,total_charges):
-  pred_dict={"gender":str(gender), "SeniorCitizen":str(citizen),"Partner":str(partner),"Dependents":str(dependents),
-  "tenure":int(tenure),"PhoneService":str(phone_service),"InternetService":str(internet_service),"OnlineSecurity":str(online_security),
+  pred_dict={"ID":"1","gender":str(gender), "SeniorCitizen":str(citizen),"Partner":str(partner),"Dependents":str(dependents),
+  "tenure":int(tenure),"PhoneService":str(phone_service),"MultipleLines":str(multiple_lines),"InternetService":str(internet_service),"OnlineSecurity":str(online_security),
   "OnlineBackup":str(online_backup), "DeviceProtection":str(device_protection),"TechSupport":str(techsupport),"StreamingTV":str(streaming_tv),
   "StreamingMovies":str(streaming_movies),"Contract":str(contract),"PaperlessBilling":str(paperless_billing),"PaymentMethod":str(payment_method),
   "MonthlyCharges":int(monthly_charges),"TotalCharges":int(total_charges) }
-  pred_columns=['gender', 'SeniorCitizen', 'Partner', 'Dependents','tenure', 'PhoneService', 'MultipleLines', 'InternetService',
+  pred_columns=['ID','gender', 'SeniorCitizen', 'Partner', 'Dependents','tenure', 'PhoneService', 'MultipleLines', 'InternetService',
        'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport','StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
        'PaymentMethod', 'MonthlyCharges', 'TotalCharges']
-  pred_df=pd.DataFrame(pred_dict,columns=pred_columns)
-  pred_df.to_csv(DATA_PATH.joinpath("pred_data.csv"))
+  pred_df=pd.DataFrame(pred_dict,columns=pred_columns,index=['ID'])
+  pred_df.to_csv(DATA_PATH.joinpath("telco_pred_data.csv"))
   return f"{pred_dict}"
     # if n is None:
     #     return "Enter all values"
