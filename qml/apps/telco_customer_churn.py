@@ -633,6 +633,16 @@ dbc.Tab(
   # Ml Prediction Body
    html.Div(
     [
+# results row
+           dbc.Row(
+                      [
+                                  dbc.Col(html.Div(
+               dbc.Alert(id="prediction-output", color="success"),
+                            ),
+                            md=12),
+                      ],style={'margin-top': '10px'} ,
+                  ),
+# end results row
     #1.
         dbc.Row(
             [
@@ -682,6 +692,7 @@ dbc.Tab(
                                       id="multipleLines-input", placeholder="Select Multiple lines...", options=[
                                           {"label": "Yes", "value": "Yes"},
                                           {"label": "No", "value": "No"},
+                                          {"label": "No phone service", "value": "No phone service"},
                                           ],           
                                             ),
                               html.Br(),
@@ -702,7 +713,8 @@ dbc.Tab(
                               dcc.Dropdown(
                                       id="internet-service-input", placeholder="Select Internet Service...", options=[
                                           {"label": "DSL", "value": "DSL"},
-                                          {"label": "Female", "value": "Female"},
+                                          {"label": "Fiber optic", "value": "Fiber optic"},
+                                          {"label": "No", "value": "No"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
@@ -710,6 +722,7 @@ dbc.Tab(
                                       id="online-security-input", placeholder="Select Online Security...", options=[
                                           {"label": "Yes", "value": "Yes"},
                                           {"label": "No", "value": "No"},
+                                          {"label": "No internet service", "value": "No internet service"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
@@ -717,6 +730,7 @@ dbc.Tab(
                                       id="online-backup-input", placeholder="Select Online backup...", options=[
                                           {"label": "Yes", "value": "Yes"},
                                           {"label": "No", "value": "No"},
+                                          {"label": "No internet service", "value": "No internet service"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
@@ -724,6 +738,7 @@ dbc.Tab(
                                       id="device-protection-input", placeholder="Select Device Protection...", options=[
                                           {"label": "Yes", "value": "Yes"},
                                           {"label": "No", "value": "No"},
+                                          {"label": "No internet service", "value": "No internet service"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
@@ -731,6 +746,7 @@ dbc.Tab(
                                       id="techsupport-input", placeholder="Select Tech Support...", options=[
                                           {"label": "Yes", "value": "Yes"},
                                           {"label": "No", "value": "No"},
+                                          {"label": "No internet service", "value": "No internet service"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
@@ -738,6 +754,7 @@ dbc.Tab(
                                       id="streaming-tv-input", placeholder="Select Streaming Tv...", options=[
                                           {"label": "Yes", "value": "Yes"},
                                           {"label": "No", "value": "No"},
+                                          {"label": "No internet service", "value": "No internet service"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
@@ -758,13 +775,15 @@ dbc.Tab(
                                       id="streaming-movies-input", placeholder="Select Streaming Movies...", options=[
                                           {"label": "Yes", "value": "Yes"},
                                           {"label": "No", "value": "No"},
+                                          {"label": "No internet service", "value": "No internet service"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
                               dcc.Dropdown(
                                       id="contract-input", placeholder="Select Contract Type...", options=[
+                                          {"label": "Month-to-month", "value": "Month-to-month"},
                                           {"label": "One year", "value": "One year"},
-                                          {"label": "Month-to-Month", "value": "Month-to-Month"},
+                                          {"label": "Two year", "value": "Two year"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               html.Br(),
@@ -778,7 +797,9 @@ dbc.Tab(
                                dcc.Dropdown(
                                       id="payment-method-input", placeholder="Select Payment Method...", options=[
                                           {"label": "Electronic check", "value": "Electronic check"},
-                                          {"label": "No", "value": "No"},
+                                          {"label": "Mailed check", "value": "Mailed check"},
+                                          {"label": "Bank transfer (automatic)", "value": "Bank transfer (automatic)"},
+                                          {"label": "Credit card (automatic)", "value": "Credit card (automatic)"},
                                           ],style={'margin-bottom': '5px'}            
                                             ),
                               
@@ -807,17 +828,6 @@ dbc.Tab(
             ]
         ),
 
-# 4. 
-        dbc.Row(
-            [
-                        dbc.Col(html.Div(
-     # html.Span(id="example-output", style={"vertical-align": "middle"}), 
-     dbc.Alert(id="example-output", color="success"),
-                  ),
-                  md=12),
-            ]
-        ),
-     
 
        
         # footer
@@ -855,21 +865,45 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
 
 
 @app.callback(
-    Output("example-output", "children"), 
+    Output("prediction-output", "children"), 
     Input("predict-input", "n_clicks"),
     [State("gender-input", "value"),
     State("citizen-input","value"),
     State("partner-input","value"),
     State("dependents-input","value"),
     State("phone-service-input","value"),
-    State("tenure-input","value")]
+    State("tenure-input","value"),
+    State("internet-service-input","value"),
+    State("online-security-input","value"),
+    State("online-backup-input","value"),
+    State("device-protection-input","value"),
+    State("techsupport-input","value"),
+    State("streaming-tv-input","value"),
+    State("streaming-movies-input","value"),
+    State("contract-input","value"),
+    State("paperless-billing-input","value"),
+    State("payment-method-input","value"),
+    State("monthly-charges-input","value"),
+    State("total-charges-input","value")
+    ]
     ,
     prevent_initial_call=False
 )
-def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure):
-   return f"Selected: {str(gender)},  {str(citizen)}, {str(partner)},{str(dependents)},{str(phone_service)},{int(tenure)}."
+def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,internet_service,online_security,online_backup,
+                    device_protection,techsupport,streaming_tv,streaming_movies,contract,paperless_billing,payment_method,
+                    monthly_charges,total_charges):
+  pred_dict={"gender":str(gender), "SeniorCitizen":str(citizen),"Partner":str(partner),"Dependents":str(dependents),
+  "tenure":int(tenure),"PhoneService":str(phone_service),"InternetService":str(internet_service),"OnlineSecurity":str(online_security),
+  "OnlineBackup":str(online_backup), "DeviceProtection":str(device_protection),"TechSupport":str(techsupport),"StreamingTV":str(streaming_tv),
+  "StreamingMovies":str(streaming_movies),"Contract":str(contract),"PaperlessBilling":str(paperless_billing),"PaymentMethod":str(payment_method),
+  "MonthlyCharges":int(monthly_charges),"TotalCharges":int(total_charges) }
+  pred_columns=['gender', 'SeniorCitizen', 'Partner', 'Dependents','tenure', 'PhoneService', 'MultipleLines', 'InternetService',
+       'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport','StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
+       'PaymentMethod', 'MonthlyCharges', 'TotalCharges']
+  pred_df=pd.DataFrame(pred_dict,columns=pred_columns)
+  pred_df.to_csv(DATA_PATH.joinpath("pred_data.csv"))
+  return f"{pred_dict}"
     # if n is None:
     #     return "Enter all values"
-    # else:
         # return f"Clicked {int(salary)} times and {str(gender)}."
         # return gender
