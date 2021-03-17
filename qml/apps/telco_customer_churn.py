@@ -30,6 +30,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score,f1_score,confusion_matrix,roc_curve,roc_auc_score
 # Save model
 import os
+import io
 import joblib
 
 from app import app, server
@@ -239,6 +240,8 @@ def svm_confusion_matrix(telco_churm_metrics_df):
   fig = ff.create_annotated_heatmap(svm_z,x=x, y=y, annotation_text=svm_z_text,  hoverinfo='z',colorscale='rainbow')
   fig.update_layout(title_text='Support Vector Machine',autosize=True,margin=dict(t=30,b=0,l=0,r=0))
   return fig
+
+
 
 layout=dbc.Container([
 
@@ -638,31 +641,7 @@ dbc.Tab(
   # Ml Prediction Body
    html.Div(
     [
-# results row
-           dbc.Row(
-                      [
-                            dbc.Col(html.Div(
-                             du.Upload( id='upload-file',
-                                  max_file_size=2,  # 2 Mb max file size
-                                  filetypes=['csv'],
-                                  # upload_id=uuid.uuid1(),  # Unique session id
-                                  text='Drag and Drop a File Here to upload!',
-                                  text_completed='File Sucessfully Uploaded: ',
-                                     ),
-                            ),
-                            md=4),
 
-                            dbc.Col(html.Div(
-                            html.Div(id='output-stats'),
-                            ),
-                            md=4),
-                            dbc.Col(html.Div(
-                            dbc.Alert(id="prediction-output", color="success"),
-                            ),
-                            md=4),
-                      ],style={'margin-top': '10px'} ,
-                  ),
-# end results row
     #1.
         dbc.Row(
             [
@@ -780,6 +759,8 @@ dbc.Tab(
                               html.Br(),
                               dbc.Button("predict", id="predict-input", className="mr-2"),
 
+
+
                           ]
                       ),
       style={
@@ -837,7 +818,7 @@ dbc.Tab(
    #3. 
                        dbc.Col(html.Div(
               [
-                html.H6("Ml Prediction") , 
+                html.H6("Batch Prediction") , 
                    ]
                   ),
       style={
@@ -845,6 +826,35 @@ dbc.Tab(
             },
                   md=4),
 
+            ]
+        ),
+
+ dbc.Row(
+            [
+             dbc.Col(html.Div(
+                       du.Upload( id='upload-file',
+                                  max_file_size=2,  # 2 Mb max file size
+                                  filetypes=['csv'],
+                                  # upload_id=uuid.uuid1(),  # Unique session id
+                                  text='Drag and Drop a File Here to upload!',
+                                  text_completed='File Sucessfully Uploaded: ',
+                                     ),
+                  ),
+                 md=6),
+
+                dbc.Col(html.Div(
+                    dbc.Alert(id="prediction-output", color="success"),
+                  ),
+                 md=6),
+            ]
+        ),
+
+  dbc.Row(
+            [
+                dbc.Col(html.Div(
+                    dcc.Graph(id='prediction-output-table',figure={})
+                  ),
+                 md=12)
             ]
         ),
 
@@ -948,12 +958,24 @@ def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,mul
 
   predict_probability=joblib_model.predict_proba(pred_df.tail(1))
   prediction = joblib_model.predict(pred_df.tail(1))[0]
-  return f"Predicted : {prediction} With Confidence of {predict_probability}."
+
+  churn_confidence=''
+  churn_prediction=''
+  if prediction==1:
+      pred_feedback=(predict_probability[:,1])
+      churn_prediction='Model predicted the customer will churn '
+  else:
+      pred_feedback=(predict_probability[:,0])
+      churn_prediction='Model predicted the customer will not churn '
+  pred_feedback[0]
+  churn_prediction
+
+  return f"{churn_prediction} With Confidence of {round(pred_feedback[0]*100,2)}%."
 
 
 
 @app.callback(
-    Output("output-stats", "children"), 
+    Output("prediction-output-table", "figure"), 
     [Input('upload-file', 'isCompleted'),
      # Input("predict-input", "n_clicks")
      ],
@@ -965,7 +987,6 @@ def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,mul
 def callback_on_completion(iscompleted, filenames, upload_id):
   file=str(filenames).replace("['","").replace("']","")
   pred_data=pd.read_csv(TELCO_CHURN_FILE_UPLOADS_DATA_PATH.joinpath(file))
-  # pd.read_csv(TELCO_CHURN_FILE_UPLOADS_DATA_PATH.joinpath(file))
   print(pred_data.shape)
 
 
@@ -998,6 +1019,23 @@ def callback_on_completion(iscompleted, filenames, upload_id):
 
   predict_probability=joblib_model.predict_proba(pred_df.tail(int(user_records_loaded)))
   prediction = joblib_model.predict(pred_df.tail(int(user_records_loaded)))[0:int(user_records_loaded)]
+  
+  results_df = pd.DataFrame({'No Probability':predict_probability[:,0], 'Yes Probability':predict_probability[:,1],'Prediction':prediction})
+  pred_data[['No Probability','Yes Probability','Prediction']]=results_df
+  pred_data['Prediction'].replace(to_replace=1.0, value='Yes', inplace=True)
+  pred_data['Prediction'].replace(to_replace=0.0, value='No', inplace=True)
+  pred_confidence=[]
+  for index, row in pred_data.iterrows():
+      if row['Prediction']=='Yes':
+          pred_confidence.append(row['Yes Probability']*100)
+      else:
+          pred_confidence.append(row['No Probability']*100)
+  pred_data['Prediction Confidence']=pred_confidence
 
-  return f"Records :  {user_records_loaded}  Attributes : {user_attribute_attributes}  Predicted :  {prediction}  With Confidence of :  {predict_probability} . "
+  print(pred_data.head())
 
+  fig = go.Figure(data=[go.Table(header=dict(values=list(pred_data[['customerID','Prediction','Prediction Confidence']]),fill_color='paleturquoise',
+                align='left'),cells=dict(values=[pred_data['customerID'], pred_data['Prediction'], pred_data['Prediction Confidence']],
+               fill_color='lavender',align='left'))])
+  fig.update_layout(showlegend=False,autosize=True,margin=dict(t=0,b=0,l=0,r=0),height=350)
+  return fig
