@@ -12,9 +12,8 @@ from app import app, server
 
 
 PATH=pathlib.Path(__file__).parent
-DATA_PATH=PATH.joinpath("../datasets").resolve()
-du.configure_upload(app, DATA_PATH, use_upload_id=False)
-
+# TELCO_CHURN_FILE_UPLOADS_DATA_PATH=PATH.joinpath("../datasets/telco_churn_file_uploads").resolve()
+# du.configure_upload(app, TELCO_CHURN_FILE_UPLOADS_DATA_PATH, use_upload_id=False)
 
 
 layout=dbc.Container([
@@ -48,7 +47,7 @@ layout=dbc.Container([
                 dbc.Col(html.Div([                  
                    du.Upload( id='upload-file',
                         max_file_size=2,  # 2 Mb max file size
-                        filetypes=['csv', 'zip'],
+                        filetypes=['csv'],
                         # upload_id=uuid.uuid1(),  # Unique session id
                         text='Drag and Drop a File Here to upload!',
                         text_completed='File Sucessfully Uploaded: ',
@@ -139,17 +138,20 @@ layout=dbc.Container([
 
 
 
-@app.callback(
-    Output('output-stats', 'children'),
-    [Input('upload-file', 'isCompleted')],
-    [State('upload-file', 'fileNames'),
-     State('upload-file', 'upload_id')
-     ],
-)
+# @app.callback(
+#     Output('output-stats', 'children'),
+#     [Input('upload-file', 'isCompleted')],
+#     [State('upload-file', 'fileNames'),
+#      State('upload-file', 'upload_id')
+#      ],
+# )
 
-def callback_on_completion(iscompleted, filenames, upload_id):
-  data=[str(x) for x in filenames]
-  file=str(data).replace("['","").replace("']","")
-  df=pd.read_csv(DATA_PATH.joinpath(file))
-  return "# Records : "+str(df.shape[0])+" | # Attributes : "+str(df.shape[1])
+# def callback_on_completion(iscompleted, filenames, upload_id):
+#   # data=[str(x) for x in filenames]
+#   # return filenames
+  
+#   file=str(filenames).replace("['","").replace("']","")
+#   df=pd.read_csv(TELCO_CHURN_FILE_UPLOADS_DATA_PATH.joinpath(file))
+#   # print(df.head())
+#   return "# Records : "+str(df.shape[0])+" | # Attributes : "+str(df.shape[1])
 

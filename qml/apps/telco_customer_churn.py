@@ -2,6 +2,8 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_uploader as du
+import uuid
 import pathlib
 import dash_bootstrap_components as dbc
 import plotly.figure_factory as ff
@@ -30,16 +32,19 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score,f1_sco
 import os
 import joblib
 
-from app import app
+from app import app, server
 
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
+TELCO_CHURN_FILE_UPLOADS_DATA_PATH=PATH.joinpath("../datasets/telco_churn_file_uploads").resolve()
+du.configure_upload(app, TELCO_CHURN_FILE_UPLOADS_DATA_PATH, use_upload_id=False)
 TELCO_CHURN_MODEL_DATA_PATH=PATH.joinpath("../Notebooks/Churn Models").resolve()
 feat_importance_df=pd.read_csv(DATA_PATH.joinpath("feature-importance.csv"))
 df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv"))
 telco_churm_metrics_df=pd.read_json(TELCO_CHURN_MODEL_DATA_PATH.joinpath("model_metrics.json"), orient ='split', compression = 'infer')
 joblib_model = joblib.load(TELCO_CHURN_MODEL_DATA_PATH.joinpath("best_gridsearch_model_pipeline.pkl"))
+
 
 
 df['TotalCharges']=pd.to_numeric(df['TotalCharges'], errors='coerce')
@@ -636,10 +641,25 @@ dbc.Tab(
 # results row
            dbc.Row(
                       [
-                                  dbc.Col(html.Div(
-               dbc.Alert(id="prediction-output", color="success"),
+                            dbc.Col(html.Div(
+                             du.Upload( id='upload-file',
+                                  max_file_size=2,  # 2 Mb max file size
+                                  filetypes=['csv'],
+                                  # upload_id=uuid.uuid1(),  # Unique session id
+                                  text='Drag and Drop a File Here to upload!',
+                                  text_completed='File Sucessfully Uploaded: ',
+                                     ),
                             ),
-                            md=12),
+                            md=4),
+
+                            dbc.Col(html.Div(
+                            html.Div(id='output-stats'),
+                            ),
+                            md=4),
+                            dbc.Col(html.Div(
+                            dbc.Alert(id="prediction-output", color="success"),
+                            ),
+                            md=4),
                       ],style={'margin-top': '10px'} ,
                   ),
 # end results row
@@ -904,26 +924,15 @@ def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,mul
   pred_data=pd.DataFrame(pred_dict,columns=pred_columns, index=[0])
   pred_data.to_csv(DATA_PATH.joinpath("telco_pred_data.csv")) # for reference
 
-  # df=pd.read_csv("../datasets/telco-customer-churn.csv")
-  df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv"))
-  # pred_data.drop(pred_data.columns[0], axis = 1, inplace = True) 
+  df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv")) # use the data to process user input
   df.set_index("customerID", inplace = True)
-  # pred_data.set_index("ID", inplace = True)
   df=df.drop(columns=['Churn'])
   df['TotalCharges']=pd.to_numeric(df['TotalCharges'], errors='coerce')
-  # pred_data=pd.read_csv('../datasets/telco_pred_data.csv',index_col=['ID'])
-  
-  # print(pred_data)
-  # pred_data=pred_data.drop(columns=['Unnamed: 0'])
   pred_df=df.append(pred_data)
   pred_df['SeniorCitizen']=pred_df['SeniorCitizen'].fillna(pred_df['SeniorCitizen'].max())
   pred_df['SeniorCitizen']=pred_df['SeniorCitizen'].apply(np.int64)
-  # print(pred_df)
-
-
   pred_df_columns=['gender','Partner','Dependents','PhoneService','MultipleLines','InternetService','OnlineSecurity','OnlineBackup','DeviceProtection', 'TechSupport', 'StreamingTV','StreamingMovies','Contract', 'PaperlessBilling', 'PaymentMethod','SeniorCitizen']
   pred_df=pd.get_dummies(pred_df,columns=pred_df_columns)
-  # pred_df.shape
 
   pred_mms_columns=['tenure','MonthlyCharges','TotalCharges']
   pred_mms_df=pd.DataFrame(pred_df,columns=pred_mms_columns)
@@ -936,18 +945,59 @@ def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,mul
   pred_df= pred_df.sort_index(axis=1)
   pred_df=pred_df.dropna()
   pred_df=pred_df.iloc[:,1:]
-  # Load from file
-  # joblib_model = joblib.load(dump_file)
 
   predict_probability=joblib_model.predict_proba(pred_df.tail(1))
-  # print(predict_probability)
   prediction = joblib_model.predict(pred_df.tail(1))[0]
-  # prediction[0]
-
-
   return f"Predicted : {prediction} With Confidence of {predict_probability}."
-    # if n is None:
-    #     return "Enter all values"
-        # return f"Clicked {int(salary)} times and {str(gender)}."
-        # return gender
-        # "MultipleLines":str(multiple_lines),
+
+
+
+@app.callback(
+    Output("output-stats", "children"), 
+    [Input('upload-file', 'isCompleted'),
+     # Input("predict-input", "n_clicks")
+     ],
+    [State('upload-file', 'fileNames'),
+     State('upload-file', 'upload_id')],
+    prevent_initial_call=True
+    )
+
+def callback_on_completion(iscompleted, filenames, upload_id):
+  file=str(filenames).replace("['","").replace("']","")
+  pred_data=pd.read_csv(TELCO_CHURN_FILE_UPLOADS_DATA_PATH.joinpath(file))
+  # pd.read_csv(TELCO_CHURN_FILE_UPLOADS_DATA_PATH.joinpath(file))
+  print(pred_data.shape)
+
+
+  df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv")) # use the data to process user input
+  pred_df=df.append(pred_data)
+  pred_df.set_index("customerID", inplace = True)
+  # pred_df.dropna(inplace=True)
+  pred_df['TotalCharges']=pd.to_numeric(pred_df['TotalCharges'], errors='coerce')
+  pred_df=pred_df.drop(columns=['Churn'])
+  print(pred_data.shape)
+  pred_df['SeniorCitizen']=pred_df['SeniorCitizen'].fillna(pred_df['SeniorCitizen'].max())
+  pred_df['SeniorCitizen']=pred_df['SeniorCitizen'].apply(np.int64)
+  pred_df_columns=['gender','Partner','Dependents','PhoneService','MultipleLines','InternetService','OnlineSecurity','OnlineBackup','DeviceProtection', 'TechSupport', 'StreamingTV','StreamingMovies','Contract', 'PaperlessBilling', 'PaymentMethod','SeniorCitizen']
+  pred_df=pd.get_dummies(pred_df,columns=pred_df_columns)
+
+  pred_mms_columns=['tenure','MonthlyCharges','TotalCharges']
+  pred_mms_df=pd.DataFrame(pred_df,columns=pred_mms_columns)
+  pred_df=pred_df.drop(columns=pred_mms_columns)
+
+  pred_rescaled_features=MinMaxScaler().fit_transform(pred_mms_df)
+  pred_rescaled_df=pd.DataFrame(pred_rescaled_features,columns=pred_mms_columns,index=pred_df.index)
+  pred_df=pd.concat([pred_df,pred_rescaled_df],axis=1)
+
+  pred_df= pred_df.sort_index(axis=1)
+  pred_df=pred_df.dropna()
+  # pred_df=pred_df.iloc[:,1:]
+  print(pred_data.shape)
+  user_records_loaded=str(df.shape[0])
+  user_attribute_attributes=str(df.shape[1])
+
+  predict_probability=joblib_model.predict_proba(pred_df.tail(int(user_records_loaded)))
+  prediction = joblib_model.predict(pred_df.tail(int(user_records_loaded)))[0:int(user_records_loaded)]
+
+  return f"Records :  {user_records_loaded}  Attributes : {user_attribute_attributes}  Predicted :  {prediction}  With Confidence of :  {predict_probability} . "
+
