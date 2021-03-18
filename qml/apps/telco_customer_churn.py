@@ -195,7 +195,6 @@ def feature_correlation(df):
 
 def feature_importance(feat_importance_df):
   feat_importance_df=feat_importance_df.sort_values(by=['Importance'],ascending=False)
-  # feat_importance_df.columns=['Features','Importance']
   fig=px.bar(feat_importance_df,x='Features',y='Importance',text='Importance',color='Importance',height=650,title='Random Forest Feature Importance')
   fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.01),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
   return fig
@@ -704,9 +703,6 @@ dbc.Tab(
 
                 html.Div(
                           [
-                              # dcc.Dropdown(id='my-dpdn', multi=False, value='AMZN',
-                              #         options=[{'label':x,'value':x} for x in sorted(df['Symbols'].unique())],
-                              #         style={'margin-bottom': '15px'}),
                               dcc.Dropdown(
                                       id="gender-input", placeholder="Select Gender...", options=[
                                           {"label": "Male", "value": "Male"},
@@ -1048,7 +1044,6 @@ def callback_on_completion(iscompleted, filenames, upload_id):
   df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv")) # use the data to process user input
   pred_df=df.append(pred_data)
   pred_df.set_index("customerID", inplace = True)
-  # pred_df.dropna(inplace=True)
   pred_df['TotalCharges']=pd.to_numeric(pred_df['TotalCharges'], errors='coerce')
   pred_df=pred_df.drop(columns=['Churn'])
   print(pred_data.shape)
@@ -1067,7 +1062,6 @@ def callback_on_completion(iscompleted, filenames, upload_id):
 
   pred_df= pred_df.sort_index(axis=1)
   pred_df=pred_df.dropna()
-  # pred_df=pred_df.iloc[:,1:]
   print(pred_data.shape)
   user_records_loaded=str(df.shape[0])
   user_attribute_attributes=str(df.shape[1])
