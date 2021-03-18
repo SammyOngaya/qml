@@ -13,10 +13,10 @@ layout=dbc.Container([
    dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Telco Customer Churn", active=True,href="/apps/telco_customer_churn")),
-        dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
-        dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
-        dbc.NavItem(dbc.NavLink("Analyse", active=True,href="#")),
-        dbc.NavItem(dbc.NavLink("Model", active=True, href="#"))
+        # dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
+        # dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
+        # dbc.NavItem(dbc.NavLink("Analyse", active=True,href="#")),
+        # dbc.NavItem(dbc.NavLink("Model", active=True, href="#"))
     ], 
     brand="Qaml",
     brand_href="/apps/home",

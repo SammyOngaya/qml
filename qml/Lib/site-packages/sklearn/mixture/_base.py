@@ -9,7 +9,6 @@ from abc import ABCMeta, abstractmethod
 from time import time
 
 import numpy as np
-from scipy.special import logsumexp
 
 from .. import cluster
 from ..base import BaseEstimator
@@ -17,6 +16,7 @@ from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted
+from ..utils.fixes import logsumexp
 
 
 def _check_shape(param, param_shape, name):
@@ -41,7 +41,7 @@ def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
 
     n_components : int
 
@@ -88,7 +88,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
         """
         if self.n_components < 1:
             raise ValueError("Invalid value for 'n_components': %d "
@@ -125,7 +125,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape  (n_samples, n_features)
+        X : array-like, shape  (n_samples, n_features)
         """
         pass
 
@@ -134,11 +134,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape  (n_samples, n_features)
+        X : array-like, shape  (n_samples, n_features)
 
         random_state : RandomState
-            A random number generator instance that controls the random seed
-            used for the method chosen to initialize the parameters.
+            A random number generator instance.
         """
         n_samples, _ = X.shape
 
@@ -162,9 +161,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape  (n_samples, n_features)
+        X : array-like, shape  (n_samples, n_features)
 
-        resp : array-like of shape (n_samples, n_components)
+        resp : array-like, shape (n_samples, n_components)
         """
         pass
 
@@ -182,7 +181,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -208,7 +207,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -218,7 +217,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         X = _check_X(X, self.n_components, ensure_min_samples=2)
-        self._check_n_features(X, reset=True)
         self._check_initial_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation
@@ -284,7 +282,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
@@ -304,9 +302,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
-        log_resp : array-like of shape (n_samples, n_components)
+        log_resp : array-like, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
@@ -325,7 +323,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -344,7 +342,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_dimensions)
+        X : array-like, shape (n_samples, n_dimensions)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -360,7 +358,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -378,7 +376,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -398,8 +396,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        n_samples : int, default=1
-            Number of samples to generate.
+        n_samples : int, optional
+            Number of samples to generate. Defaults to 1.
 
         Returns
         -------
@@ -447,7 +445,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
@@ -473,7 +471,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
@@ -490,7 +488,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------

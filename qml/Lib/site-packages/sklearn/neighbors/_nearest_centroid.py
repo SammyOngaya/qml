@@ -15,8 +15,7 @@ from scipy import sparse as sp
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_array, check_is_fitted
-from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_array, check_X_y, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 
@@ -31,7 +30,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    metric : str or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -42,10 +41,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
 
-        .. versionchanged:: 0.19
-            ``metric='precomputed'`` was deprecated and now raises an error
-
-    shrink_threshold : float, default=None
+    shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
 
     Attributes
@@ -68,9 +64,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See Also
+    See also
     --------
-    KNeighborsClassifier : Nearest neighbors classifier.
+    sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
 
     Notes
     -----
@@ -86,8 +82,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(self, metric='euclidean', *, shrink_threshold=None):
+    def __init__(self, metric='euclidean', shrink_threshold=None):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
 
@@ -101,7 +96,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
-        y : array-like of shape (n_samples,)
+        y : array, shape = [n_samples]
             Target values (integers)
         """
         if self.metric == 'precomputed':
@@ -109,9 +104,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == 'manhattan':
-            X, y = self._validate_data(X, y, accept_sparse=['csc'])
+            X, y = check_X_y(X, y, ['csc'])
         else:
-            X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
+            X, y = check_X_y(X, y, ['csr', 'csc'])
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
@@ -154,9 +149,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
-            if np.all(np.ptp(X, axis=0) == 0):
-                raise ValueError("All features have zero variance. "
-                                 "Division by zero.")
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation

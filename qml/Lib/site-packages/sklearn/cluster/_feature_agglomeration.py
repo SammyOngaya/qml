@@ -8,6 +8,7 @@ agglomeration.
 import numpy as np
 
 from ..base import TransformerMixin
+from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from scipy.sparse import issparse
 
@@ -32,12 +33,15 @@ class AgglomerationTransform(TransformerMixin):
 
         Returns
         -------
-        Y : ndarray of shape (n_samples, n_clusters) or (n_clusters,)
+        Y : array, shape = [n_samples, n_clusters] or [n_clusters]
             The pooled values for each feature cluster.
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = check_array(X)
+        if len(self.labels_) != X.shape[1]:
+            raise ValueError("X has a different number of features than "
+                             "during fitting.")
         if self.pooling_func == np.mean and not issparse(X):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]
@@ -63,7 +67,7 @@ class AgglomerationTransform(TransformerMixin):
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features) or (n_features,)
+        X : array, shape=[n_samples, n_features] or [n_features]
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """

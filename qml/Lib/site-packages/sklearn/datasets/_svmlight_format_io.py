@@ -25,7 +25,6 @@ import scipy.sparse as sp
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
-from ..utils.validation import _deprecate_positional_args
 
 if not IS_PYPY:
     from ._svmlight_format_fast import _load_svmlight_file
@@ -38,8 +37,7 @@ else:
                 'for the status updates).')
 
 
-@_deprecate_positional_args
-def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
+def load_svmlight_file(f, n_features=None, dtype=np.float64,
                        multilabel=False, zero_based="auto", query_id=False,
                        offset=0, length=-1):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
@@ -74,13 +72,13 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    f : str, file-like or int
+    f : {str, file-like, int}
         (Path to) a file to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. A file-like or file descriptor will not be closed
         by this function. A file-like object must be opened in binary mode.
 
-    n_features : int, default=None
+    n_features : int or None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
         bigger sliced dataset: each subset might not have examples of
@@ -89,15 +87,15 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
         n_features is only required if ``offset`` or ``length`` are passed a
         non-default value.
 
-    dtype : numpy data type, default=np.float64
+    dtype : numpy data type, default np.float64
         Data type of dataset to be loaded. This will be the data type of the
         output numpy arrays ``X`` and ``y``.
 
-    multilabel : bool, default=False
+    multilabel : boolean, optional, default False
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based : bool or "auto", default="auto"
+    zero_based : boolean or "auto", optional, default "auto"
         Whether column indices in f are zero-based (True) or one-based
         (False). If column indices are one-based, they are transformed to
         zero-based to match Python/NumPy conventions.
@@ -109,15 +107,15 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
         to ``zero_based=True`` to avoid having the heuristic check yield
         inconsistent results on different segments of the file.
 
-    query_id : bool, default=False
+    query_id : boolean, default False
         If True, will return the query_id array for each file.
 
-    offset : int, default=0
+    offset : integer, optional, default 0
         Ignore the offset first bytes by seeking forward, then
         discarding the following bytes up until the next new line
         character.
 
-    length : int, default=-1
+    length : integer, optional, default -1
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
 
@@ -132,10 +130,11 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
        query_id for each sample. Only returned when query_id is set to
        True.
 
-    See Also
+    See also
     --------
-    load_svmlight_files : Similar function for loading multiple files in this
-        format, enforcing the same number of features/columns on all of them.
+    load_svmlight_files: similar function for loading multiple files in this
+                         format, enforcing the same number of features/columns
+                         on all of them.
 
     Examples
     --------
@@ -152,13 +151,8 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
 
         X, y = get_data()
     """
-    return tuple(load_svmlight_files([f], n_features=n_features,
-                                     dtype=dtype,
-                                     multilabel=multilabel,
-                                     zero_based=zero_based,
-                                     query_id=query_id,
-                                     offset=offset,
-                                     length=length))
+    return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
+                                     zero_based, query_id, offset, length))
 
 
 def _gen_open(f):
@@ -202,8 +196,7 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
     return data, indices, indptr, labels, query
 
 
-@_deprecate_positional_args
-def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
+def load_svmlight_files(files, n_features=None, dtype=np.float64,
                         multilabel=False, zero_based="auto", query_id=False,
                         offset=0, length=-1):
     """Load dataset from multiple files in SVMlight format
@@ -223,14 +216,14 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    files : array-like, dtype=str, file-like or int
+    files : iterable over {str, file-like, int}
         (Paths of) files to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. File-likes and file descriptors will not be
         closed by this function. File-like objects must be opened in binary
         mode.
 
-    n_features : int, default=None
+    n_features : int or None
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
 
@@ -238,15 +231,15 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
         in any of the input files, but setting it to a lower value will cause
         an exception to be raised.
 
-    dtype : numpy data type, default=np.float64
+    dtype : numpy data type, default np.float64
         Data type of dataset to be loaded. This will be the data type of the
         output numpy arrays ``X`` and ``y``.
 
-    multilabel : bool, default=False
+    multilabel : boolean, optional
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based : bool or "auto", default="auto"
+    zero_based : boolean or "auto", optional
         Whether column indices in f are zero-based (True) or one-based
         (False). If column indices are one-based, they are transformed to
         zero-based to match Python/NumPy conventions.
@@ -258,15 +251,15 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
         to zero_based=True to avoid having the heuristic check yield
         inconsistent results on different segments of the file.
 
-    query_id : bool, default=False
+    query_id : boolean, defaults to False
         If True, will return the query_id array for each file.
 
-    offset : int, default=0
+    offset : integer, optional, default 0
         Ignore the offset first bytes by seeking forward, then
         discarding the following bytes up until the next new line
         character.
 
-    length : int, default=-1
+    length : integer, optional, default -1
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
 
@@ -286,7 +279,7 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
 
-    See Also
+    See also
     --------
     load_svmlight_file
     """
@@ -387,9 +380,7 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         f.write((line_pattern % feat).encode('ascii'))
 
 
-@_deprecate_positional_args
-def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
-                       query_id=None,
+def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
                        multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
 
@@ -415,11 +406,11 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
         If file-like, data will be written to f. f should be opened in binary
         mode.
 
-    zero_based : boolean, default=True
+    zero_based : boolean, optional
         Whether column indices should be written zero-based (True) or one-based
         (False).
 
-    comment : string, default=None
+    comment : string, optional
         Comment to insert at the top of the file. This should be either a
         Unicode string, which will be encoded as UTF-8, or an ASCII byte
         string.
@@ -427,11 +418,11 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
         the file as having been dumped by scikit-learn. Note that not all
         tools grok comments in SVMlight files.
 
-    query_id : array-like of shape (n_samples,), default=None
+    query_id : array-like of shape (n_samples,)
         Array containing pairwise preference constraints (qid in svmlight
         format).
 
-    multilabel : boolean, default=False
+    multilabel : boolean, optional
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 

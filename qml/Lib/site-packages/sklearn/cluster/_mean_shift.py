@@ -16,20 +16,17 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
-from joblib import Parallel
+from joblib import Parallel, delayed
 
 from collections import defaultdict
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
-from ..utils.fixes import delayed
+from ..utils.validation import check_is_fitted
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
-from .._config import config_context
 
 
-@_deprecate_positional_args
-def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0,
+def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
                        n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
@@ -41,20 +38,20 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0,
     X : array-like of shape (n_samples, n_features)
         Input points.
 
-    quantile : float, default=0.3
+    quantile : float, default 0.3
         should be between [0, 1]
         0.5 means that the median of all pairwise distances is used.
 
-    n_samples : int, default=None
+    n_samples : int, optional
         The number of samples to use. If not given, all samples are used.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None (default)
         The generator used to randomly select the samples from input points
         for bandwidth estimation. Use an int to make the randomness
         deterministic.
         See :term:`Glossary <random_state>`.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -109,8 +106,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
-@_deprecate_positional_args
-def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
+def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
                n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.
@@ -123,7 +119,7 @@ def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
     X : array-like of shape (n_samples, n_features)
         Input data.
 
-    bandwidth : float, default=None
+    bandwidth : float, optional
         Kernel bandwidth.
 
         If bandwidth is not given, it is determined using a heuristic based on
@@ -136,7 +132,7 @@ def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
         each data point is used as a seed. If None and bin_seeding=True,
         see bin_seeding.
 
-    bin_seeding : bool, default=False
+    bin_seeding : boolean, default=False
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
@@ -148,16 +144,16 @@ def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
        To speed up the algorithm, accept only those bins with at least
        min_bin_freq points as seeds.
 
-    cluster_all : bool, default=True
+    cluster_all : boolean, default True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    max_iter : int, default=300
+    max_iter : int, default 300
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
@@ -171,10 +167,10 @@ def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
     Returns
     -------
 
-    cluster_centers : ndarray of shape (n_clusters, n_features)
+    cluster_centers : array, shape=[n_clusters, n_features]
         Coordinates of cluster centers.
 
-    labels : ndarray of shape (n_samples,)
+    labels : array, shape=[n_samples]
         Cluster labels for each point.
 
     Notes
@@ -210,7 +206,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         not sure how to set this, set it to the value of the bandwidth used
         in clustering.mean_shift.
 
-    min_bin_freq : int, default=1
+    min_bin_freq : integer, optional
         Only bins with at least min_bin_freq will be selected as seeds.
         Raising this value decreases the number of seeds found, which
         makes mean_shift computationally cheaper.
@@ -220,8 +216,6 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds : array-like of shape (n_samples, n_features)
         Points used as initial kernel positions in clustering.mean_shift.
     """
-    if bin_size == 0:
-        return X
 
     # Bin points
     bin_sizes = defaultdict(int)
@@ -255,38 +249,38 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    bandwidth : float, default=None
+    bandwidth : float, optional
         Bandwidth used in the RBF kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
         function for hints on scalability (see also the Notes, below).
 
-    seeds : array-like of shape (n_samples, n_features), default=None
+    seeds : array, shape=[n_samples, n_features], optional
         Seeds used to initialize kernels. If not set,
         the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
         other parameters.
 
-    bin_seeding : bool, default=False
+    bin_seeding : boolean, optional
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
         corresponds to the bandwidth. Setting this option to True will speed
         up the algorithm because fewer seeds will be initialized.
-        The default value is False.
+        default value: False
         Ignored if seeds argument is not None.
 
-    min_bin_freq : int, default=1
+    min_bin_freq : int, optional
        To speed up the algorithm, accept only those bins with at least
-       min_bin_freq points as seeds.
+       min_bin_freq points as seeds. If not defined, set to 1.
 
-    cluster_all : bool, default=True
+    cluster_all : boolean, default True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
@@ -302,10 +296,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_ : ndarray of shape (n_clusters, n_features)
+    cluster_centers_ : array, [n_clusters, n_features]
         Coordinates of cluster centers.
 
-    labels_ : ndarray of shape (n_samples,)
+    labels_ :
         Labels of each point.
 
     n_iter_ : int
@@ -352,8 +346,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Machine Intelligence. 2002. pp. 603-619.
 
     """
-    @_deprecate_positional_args
-    def __init__(self, *, bandwidth=None, seeds=None, bin_seeding=False,
+    def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
                  min_bin_freq=1, cluster_all=True, n_jobs=None, max_iter=300):
         self.bandwidth = bandwidth
         self.seeds = seeds
@@ -374,7 +367,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         y : Ignored
 
         """
-        X = self._validate_data(X)
+        X = check_array(X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
@@ -423,7 +416,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
                                      key=lambda tup: (tup[1], tup[0]),
                                      reverse=True)
         sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
-        unique = np.ones(len(sorted_centers), dtype=bool)
+        unique = np.ones(len(sorted_centers), dtype=np.bool)
         nbrs = NearestNeighbors(radius=bandwidth,
                                 n_jobs=self.n_jobs).fit(sorted_centers)
         for i, center in enumerate(sorted_centers):
@@ -437,7 +430,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         # ASSIGN LABELS: a point belongs to the cluster that it is closest to
         nbrs = NearestNeighbors(n_neighbors=1,
                                 n_jobs=self.n_jobs).fit(cluster_centers)
-        labels = np.zeros(n_samples, dtype=int)
+        labels = np.zeros(n_samples, dtype=np.int)
         distances, idxs = nbrs.kneighbors(X)
         if self.cluster_all:
             labels = idxs.flatten()
@@ -454,15 +447,14 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape=[n_samples, n_features]
             New data to predict.
 
         Returns
         -------
-        labels : ndarray of shape (n_samples,)
+        labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
-        with config_context(assume_finite=True):
-            return pairwise_distances_argmin(X, self.cluster_centers_)
+
+        return pairwise_distances_argmin(X, self.cluster_centers_)

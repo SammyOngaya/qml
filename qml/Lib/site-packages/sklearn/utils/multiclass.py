@@ -8,7 +8,6 @@ Multi-class / multi-label utility function
 """
 from collections.abc import Sequence
 from itertools import chain
-import warnings
 
 from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
@@ -28,9 +27,7 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(
-        check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1]
-    )
+    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
 
 
 _FN_UNIQUE_LABELS = {
@@ -41,7 +38,7 @@ _FN_UNIQUE_LABELS = {
 
 
 def unique_labels(*ys):
-    """Extract an ordered array of unique labels.
+    """Extract an ordered array of unique labels
 
     We don't allow:
         - mix of multilabel and multiclass (single label) targets
@@ -58,7 +55,7 @@ def unique_labels(*ys):
 
     Returns
     -------
-    out : ndarray of shape (n_unique_labels,)
+    out : numpy array of shape [n_unique_labels]
         An ordered array of unique labels.
 
     Examples
@@ -86,8 +83,7 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y,
-                                accept_sparse=['csr', 'csc', 'coo']).shape[1]
+            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
                     for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
@@ -115,12 +111,12 @@ def is_multilabel(y):
 
     Parameters
     ----------
-    y : ndarray of shape (n_samples,)
+    y : numpy array of shape [n_samples]
         Target values.
 
     Returns
     -------
-    out : bool
+    out : bool,
         Return ``True``, if ``y`` is in a multilabel format, else ```False``.
 
     Examples
@@ -139,17 +135,7 @@ def is_multilabel(y):
     True
     """
     if hasattr(y, '__array__') or isinstance(y, Sequence):
-        # DeprecationWarning will be replaced by ValueError, see NEP 34
-        # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', np.VisibleDeprecationWarning)
-            try:
-                y = np.asarray(y)
-            except np.VisibleDeprecationWarning:
-                # dtype=object should be provided explicitly for ragged arrays,
-                # see NEP 34
-                y = np.array(y, dtype=object)
-
+        y = np.asarray(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
 
@@ -201,7 +187,7 @@ def type_of_target(y):
 
     Returns
     -------
-    target_type : str
+    target_type : string
         One of:
 
         * 'continuous': `y` is an array-like of floats that are not all
@@ -261,16 +247,11 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
-    # DeprecationWarning will be replaced by ValueError, see NEP 34
-    # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
-    with warnings.catch_warnings():
-        warnings.simplefilter('error', np.VisibleDeprecationWarning)
-        try:
-            y = np.asarray(y)
-        except np.VisibleDeprecationWarning:
-            # dtype=object should be provided explicitly for ragged arrays,
-            # see NEP 34
-            y = np.asarray(y, dtype=object)
+    try:
+        y = np.asarray(y)
+    except ValueError:
+        # Known to fail in numpy 1.3 for array of arrays
+        return 'unknown'
 
     # The old sequence of sequences format
     try:
@@ -310,7 +291,7 @@ def type_of_target(y):
 
 
 def _check_partial_fit_first_call(clf, classes=None):
-    """Private helper function for factorizing common classes param logic.
+    """Private helper function for factorizing common classes param logic
 
     Estimators that implement the ``partial_fit`` API need to be provided with
     the list of possible classes at the first call to partial_fit.
@@ -345,11 +326,11 @@ def _check_partial_fit_first_call(clf, classes=None):
 
 
 def class_distribution(y, sample_weight=None):
-    """Compute class priors from multioutput-multiclass target data.
+    """Compute class priors from multioutput-multiclass target data
 
     Parameters
     ----------
-    y : {array-like, sparse matrix} of size (n_samples, n_outputs)
+    y : array like or sparse matrix of size (n_samples, n_outputs)
         The labels for each example.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -357,13 +338,13 @@ def class_distribution(y, sample_weight=None):
 
     Returns
     -------
-    classes : list of size n_outputs of ndarray of size (n_classes,)
+    classes : list of size n_outputs of arrays of size (n_classes,)
         List of classes for each column.
 
-    n_classes : list of int of size n_outputs
-        Number of classes in each column.
+    n_classes : list of integers of size n_outputs
+        Number of classes in each column
 
-    class_prior : list of size n_outputs of ndarray of size (n_classes,)
+    class_prior : list of size n_outputs of arrays of size (n_classes,)
         Class distribution of each column.
 
     """
@@ -428,16 +409,16 @@ def _ovr_decision_function(predictions, confidences, n_classes):
 
     Parameters
     ----------
-    predictions : array-like of shape (n_samples, n_classifiers)
+    predictions : array-like, shape (n_samples, n_classifiers)
         Predicted classes for each binary classifier.
 
-    confidences : array-like of shape (n_samples, n_classifiers)
+    confidences : array-like, shape (n_samples, n_classifiers)
         Decision functions or predicted probabilities for positive class
         for each binary classifier.
 
     n_classes : int
         Number of classes. n_classifiers must be
-        ``n_classes * (n_classes - 1 ) / 2``.
+        ``n_classes * (n_classes - 1 ) / 2``
     """
     n_samples = predictions.shape[0]
     votes = np.zeros((n_samples, n_classes))

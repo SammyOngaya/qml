@@ -20,21 +20,20 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fastica', 'FastICA']
 
 
 def _gs_decorrelation(w, W, j):
     """
-    Orthonormalize w wrt the first j rows of W.
+    Orthonormalize w wrt the first j rows of W
 
     Parameters
     ----------
-    w : ndarray of shape (n,)
+    w : ndarray of shape(n)
         Array to be orthogonalized
 
-    W : ndarray of shape (p, n)
+    W : ndarray of shape(p, n)
         Null space definition
 
     j : int < p
@@ -46,7 +45,7 @@ def _gs_decorrelation(w, W, j):
     Assumes that W is orthogonal
     w changed in place
     """
-    w -= np.linalg.multi_dot([w, W[:j].T, W[:j]])
+    w -= np.dot(np.dot(w, W[:j].T), W[:j])
     return w
 
 
@@ -57,7 +56,7 @@ def _sym_decorrelation(W):
     s, u = linalg.eigh(np.dot(W, W.T))
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
-    return np.linalg.multi_dot([u * (1. / np.sqrt(s)), u.T, W])
+    return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
 
 
 def _ica_def(X, tol, g, fun_args, max_iter, w_init):
@@ -147,8 +146,7 @@ def _cube(x, fun_args):
     return x ** 3, (3 * x ** 2).mean(axis=-1)
 
 
-@_deprecate_positional_args
-def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
+def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True,
             return_n_iter=False):
@@ -158,25 +156,25 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    n_components : int, default=None
+    n_components : int, optional
         Number of components to extract. If None no dimension reduction
         is performed.
 
-    algorithm : {'parallel', 'deflation'}, default='parallel'
+    algorithm : {'parallel', 'deflation'}, optional
         Apply a parallel or deflational FASTICA algorithm.
 
-    whiten : bool, default=True
+    whiten : boolean, optional
         If True perform an initial whitening of the data.
         If False, the data is assumed to have already been
         preprocessed: it should be centered, normed and white.
         Otherwise you will get incorrect results.
         In this case the parameter n_components will be ignored.
 
-    fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
+    fun : string or function, optional. Default: 'logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
@@ -188,54 +186,54 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
         def my_g(x):
             return x ** 3, np.mean(3 * x ** 2, axis=-1)
 
-    fun_args : dict, default=None
+    fun_args : dictionary, optional
         Arguments to send to the functional form.
         If empty or None and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
 
-    max_iter : int, default=200
+    max_iter : int, optional
         Maximum number of iterations to perform.
 
-    tol : float, default=1e-04
+    tol : float, optional
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
-    w_init : ndarray of shape (n_components, n_components), default=None
+    w_init : (n_components, n_components) array, optional
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    random_state : int, RandomState instance or None, default=None
-        Used to initialize ``w_init`` when not specified, with a
-        normal distribution. Pass an int, for reproducible results
-        across multiple function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
-    return_X_mean : bool, default=False
+    return_X_mean : bool, optional
         If True, X_mean is returned too.
 
-    compute_sources : bool, default=True
+    compute_sources : bool, optional
         If False, sources are not computed, but only the rotation matrix.
         This can save memory when working with big data. Defaults to True.
 
-    return_n_iter : bool, default=False
+    return_n_iter : bool, optional
         Whether or not to return the number of iterations.
 
     Returns
     -------
-    K : ndarray of shape (n_components, n_features) or None
+    K : array, shape (n_components, n_features) | None.
         If whiten is 'True', K is the pre-whitening matrix that projects data
         onto the first n_components principal components. If whiten is 'False',
         K is 'None'.
 
-    W : ndarray of shape (n_components, n_components)
+    W : array, shape (n_components, n_components)
         The square matrix that unmixes the data after whitening.
         The mixing matrix is the pseudo-inverse of matrix ``W K``
         if K is not None, else it is the inverse of W.
 
-    S : ndarray of shape (n_samples, n_components) or None
+    S : array, shape (n_samples, n_components) | None
         Estimated source matrix
 
-    X_mean : ndarray of shape (n_features,)
+    X_mean : array, shape (n_features, )
         The mean over features. Returned only if return_X_mean is True.
 
     n_iter : int
@@ -308,60 +306,60 @@ class FastICA(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default=None
-        Number of components to use. If None is passed, all are used.
+    n_components : int, optional
+        Number of components to use. If none is passed, all are used.
 
-    algorithm : {'parallel', 'deflation'}, default='parallel'
+    algorithm : {'parallel', 'deflation'}
         Apply parallel or deflational algorithm for FastICA.
 
-    whiten : bool, default=True
+    whiten : boolean, optional
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
 
-    fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
+    fun : string or function, optional. Default: 'logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example::
+        point. Example:
 
-            def my_g(x):
-                return x ** 3, (3 * x ** 2).mean(axis=-1)
+        def my_g(x):
+            return x ** 3, (3 * x ** 2).mean(axis=-1)
 
-    fun_args : dict, default=None
+    fun_args : dictionary, optional
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}.
 
-    max_iter : int, default=200
+    max_iter : int, optional
         Maximum number of iterations during fit.
 
-    tol : float, default=1e-4
+    tol : float, optional
         Tolerance on update at each iteration.
 
-    w_init : ndarray of shape (n_components, n_components), default=None
+    w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
-    random_state : int, RandomState instance or None, default=None
-        Used to initialize ``w_init`` when not specified, with a
-        normal distribution. Pass an int, for reproducible results
-        across multiple function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
-    components_ : ndarray of shape (n_components, n_features)
+    components_ : 2D array, shape (n_components, n_features)
         The linear operator to apply to the data to get the independent
         sources. This is equal to the unmixing matrix when ``whiten`` is
         False, and equal to ``np.dot(unmixing_matrix, self.whitening_)`` when
         ``whiten`` is True.
 
-    mixing_ : ndarray of shape (n_features, n_components)
+    mixing_ : array, shape (n_features, n_components)
         The pseudo-inverse of ``components_``. It is the linear operator
         that maps independent sources to the data.
 
-    mean_ : ndarray of shape(n_features,)
+    mean_ : array, shape(n_features)
         The mean over features. Only set if `self.whiten` is True.
 
     n_iter_ : int
@@ -369,7 +367,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
-    whitening_ : ndarray of shape (n_components, n_features)
+    whitening_ : array, shape (n_components, n_features)
         Only set if whiten is 'True'. This is the pre-whitening matrix
         that projects data onto the first `n_components` principal components.
 
@@ -392,8 +390,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     pp. 411-430*
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=None, *, algorithm='parallel', whiten=True,
+    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super().__init__()
@@ -415,23 +412,25 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        compute_sources : bool, default=False
+        compute_sources : bool
             If False, sources are not computes but only the rotation matrix.
             This can save memory when working with big data. Defaults to False.
 
         Returns
         -------
-            X_new : ndarray of shape (n_samples, n_components)
+            X_new : array-like, shape (n_samples, n_components)
         """
-
-        X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                                ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
+
+        # make interface compatible with other decompositions
+        # a copy is required only for non whitened data
+        X = check_array(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                        ensure_min_samples=2).T
 
         alpha = fun_args.get('alpha', 1.0)
         if not 1 <= alpha <= 2:
@@ -476,7 +475,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             X -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
-            u, d, _ = linalg.svd(X, full_matrices=False, check_finite=False)
+            u, d, _ = linalg.svd(X, full_matrices=False)
 
             del _
             K = (u / d).T[:n_components]  # see (6.33) p.140
@@ -519,7 +518,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if compute_sources:
             if self.whiten:
-                S = np.linalg.multi_dot([W, K, X]).T
+                S = np.dot(np.dot(W, K), X).T
             else:
                 S = np.dot(W, X).T
         else:
@@ -534,8 +533,11 @@ class FastICA(TransformerMixin, BaseEstimator):
         else:
             self.components_ = W
 
-        self.mixing_ = linalg.pinv(self.components_, check_finite=False)
+        self.mixing_ = linalg.pinv(self.components_)
         self._unmixing = W
+
+        if compute_sources:
+            self.__sources = S
 
         return S
 
@@ -544,7 +546,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -552,7 +554,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         return self._fit(X, compute_sources=True)
 
@@ -561,7 +563,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -579,21 +581,20 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
 
-        copy : bool, default=True
-            If False, data passed to fit can be overwritten. Defaults to True.
+        copy : bool (optional)
+            If False, data passed to fit are overwritten. Defaults to True.
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, copy=(copy and self.whiten),
-                                dtype=FLOAT_DTYPES, reset=False)
+        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
             X -= self.mean_
 
@@ -604,15 +605,15 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
             Sources, where n_samples is the number of samples
             and n_components is the number of components.
-        copy : bool, default=True
+        copy : bool (optional)
             If False, data passed to fit are overwritten. Defaults to True.
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_new : array-like, shape (n_samples, n_features)
         """
         check_is_fitted(self)
 

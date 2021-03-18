@@ -15,8 +15,8 @@ from ._openmp_helpers import _openmp_parallelism_enabled
 def _get_sys_info():
     """System information
 
-    Returns
-    -------
+    Return
+    ------
     sys_info : dict
         system and Python version information
 
@@ -51,7 +51,6 @@ def _get_deps_info():
         "pandas",
         "matplotlib",
         "joblib",
-        "threadpoolctl"
     ]
 
     def get_version(module):
@@ -74,10 +73,7 @@ def _get_deps_info():
 
 
 def show_versions():
-    """Print useful debugging information"
-
-    .. versionadded:: 0.20
-    """
+    """Print useful debugging information"""
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
@@ -88,7 +84,7 @@ def show_versions():
 
     print('\nPython dependencies:')
     for k, stat in deps_info.items():
-        print("{k:>13}: {stat}".format(k=k, stat=stat))
+        print("{k:>10}: {stat}".format(k=k, stat=stat))
 
-    print("\n{k}: {stat}".format(k="Built with OpenMP",
-                                 stat=_openmp_parallelism_enabled()))
+    print("\n{k:>10}: {stat}".format(k="Built with OpenMP",
+                                     stat=_openmp_parallelism_enabled()))

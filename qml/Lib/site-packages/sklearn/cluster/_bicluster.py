@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-import warnings
 
 import numpy as np
 
@@ -18,7 +17,7 @@ from ..utils import check_random_state
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
-from ..utils.validation import assert_all_finite, _deprecate_positional_args
+from ..utils.validation import assert_all_finite, check_array
 
 
 __all__ = ['SpectralCoclustering',
@@ -89,7 +88,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, n_clusters=3, svd_method="randomized",
                  n_svd_vecs=None, mini_batch=False, init="k-means++",
-                 n_init=10, n_jobs='deprecated', random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
@@ -111,16 +110,12 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         y : Ignored
 
         """
-        if self.n_jobs != 'deprecated':
-            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 1.0 (renaming of 0.25).", FutureWarning)
-
-        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
         return self
@@ -238,10 +233,6 @@ class SpectralCoclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. deprecated:: 0.23
-            ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            1.0 (renaming of 0.25).
-
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
@@ -284,10 +275,9 @@ class SpectralCoclustering(BaseSpectral):
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_clusters=3, *, svd_method='randomized',
+    def __init__(self, n_clusters=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs='deprecated', random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         super().__init__(n_clusters,
                          svd_method,
                          n_svd_vecs,
@@ -390,10 +380,6 @@ class SpectralBiclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. deprecated:: 0.23
-            ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            1.0 (renaming of 0.25).
-
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
@@ -436,11 +422,10 @@ class SpectralBiclustering(BaseSpectral):
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_clusters=3, *, method='bistochastic',
+    def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs='deprecated', random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         super().__init__(n_clusters,
                          svd_method,
                          n_svd_vecs,
@@ -466,11 +451,11 @@ class SpectralBiclustering(BaseSpectral):
                 r, c = self.n_clusters
                 int(r)
                 int(c)
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError):
                 raise ValueError("Incorrect parameter n_clusters has value:"
                                  " {}. It should either be a single integer"
                                  " or an iterable with two integers:"
-                                 " (n_row_clusters, n_column_clusters)") from e
+                                 " (n_row_clusters, n_column_clusters)")
         if self.n_components < 1:
             raise ValueError("Parameter n_components must be greater than 0,"
                              " but its value is {}".format(self.n_components))

@@ -22,10 +22,10 @@ from . import get_data_home
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import _refresh_cache
 from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original vectorized data can be found at:
@@ -76,8 +76,7 @@ TOPICS_METADATA = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-@_deprecate_positional_args
-def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
+def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
                random_state=None, shuffle=False, return_X_y=False):
     """Load the RCV1 multilabel dataset (classification).
 
@@ -98,21 +97,21 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : string, optional
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    subset : {'train', 'test', 'all'}, default='all'
+    subset : string, 'train', 'test', or 'all', default='all'
         Select the dataset to load: 'train' for the training set
         (23149 samples), 'test' for the test set (781265 samples),
         'all' for both, with the training samples first if shuffle is False.
         This follows the official LYRL2004 chronological split.
 
-    download_if_missing : bool, default=True
+    download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -120,7 +119,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    return_X_y : bool, default=False
+    return_X_y : boolean, default=False.
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
@@ -129,20 +128,23 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
 
     Returns
     -------
-    dataset : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+    dataset : dict-like object with the following attributes:
 
-        data : sparse matrix of shape (804414, 47236), dtype=np.float64
-            The array has 0.16% of non zero values. Will be of CSR format.
-        target : sparse matrix of shape (804414, 103), dtype=np.uint8
-            Each sample has a value of 1 in its categories, and 0 in others.
-            The array has 3.15% of non zero values. Will be of CSR format.
-        sample_id : ndarray of shape (804414,), dtype=np.uint32,
-            Identification number of each sample, as ordered in dataset.data.
-        target_names : ndarray of shape (103,), dtype=object
-            Names of each target (RCV1 topics), as ordered in dataset.target.
-        DESCR : str
-            Description of the RCV1 dataset.
+    dataset.data : scipy csr array, dtype np.float64, shape (804414, 47236)
+        The array has 0.16% of non zero values.
+
+    dataset.target : scipy csr array, dtype np.uint8, shape (804414, 103)
+        Each sample has a value of 1 in its categories, and 0 in others.
+        The array has 3.15% of non zero values.
+
+    dataset.sample_id : numpy array, dtype np.uint32, shape (804414,)
+        Identification number of each sample, as ordered in dataset.data.
+
+    dataset.target_names : numpy array, dtype object, length (103)
+        Names of each target (RCV1 topics), as ordered in dataset.target.
+
+    dataset.DESCR : string
+        Description of the RCV1 dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -188,8 +190,10 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
             f.close()
             remove(f.name)
     else:
-        X = joblib.load(samples_path)
-        sample_id = joblib.load(sample_id_path)
+        X, sample_id = _refresh_cache([samples_path, sample_id_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # sample_id = joblib.load(sample_id_path)
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -242,8 +246,10 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
     else:
-        y = joblib.load(sample_topics_path)
-        categories = joblib.load(topics_path)
+        y, categories = _refresh_cache([sample_topics_path, topics_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # y = joblib.load(sample_topics_path)
+        # categories = joblib.load(topics_path)
 
     if subset == 'all':
         pass
@@ -274,7 +280,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
 
 
 def _inverse_permutation(p):
-    """Inverse permutation p."""
+    """inverse permutation p"""
     n = p.size
     s = np.zeros(n, dtype=np.int32)
     i = np.arange(n, dtype=np.int32)
@@ -283,7 +289,7 @@ def _inverse_permutation(p):
 
 
 def _find_permutation(a, b):
-    """Find the permutation from a to b."""
+    """find the permutation from a to b"""
     t = np.argsort(a)
     u = np.argsort(b)
     u_ = _inverse_permutation(u)

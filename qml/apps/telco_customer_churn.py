@@ -31,6 +31,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score,f1_sco
 # Save model
 import os
 import io
+import shutil
 import joblib
 
 from app import app, server
@@ -57,8 +58,9 @@ def distribution_by_revenue(df):
   totalcharges_attrition_df=totalcharges_attrition_df.sort_values(by=['TotalCharges'],ascending=True)
   totalcharges_attrition_df.columns=['Churn','Revenue']
   colors = ['crimson','skyblue']
-  fig=px.bar(totalcharges_attrition_df,x='Churn',y='Revenue',color='Churn',text='Revenue',color_discrete_sequence=colors)
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
+  fig=px.bar(totalcharges_attrition_df,x='Churn',y='Revenue',color='Churn',text='Revenue',color_discrete_sequence=colors,
+    title='Churn by Revenue')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
   return fig
 
 # churn distribution
@@ -66,7 +68,8 @@ def churn_distribution(df):
   attrition_df=df.groupby(["Churn"], as_index=False )["customerID"].count()
   colors = ['skyblue','crimson']
   fig = go.Figure(data=[go.Pie(labels=attrition_df['Churn'].tolist(), values=attrition_df['customerID'].tolist(), hole=.3)])
-  fig.update_layout(showlegend=False,autosize=True,annotations=[dict(text='Attrition',  font_size=20, showarrow=False)],margin=dict(t=0,b=0,l=0,r=0),height=350,colorway=colors)
+  fig.update_layout(title={'text': 'Customer Churn Distribution','y':0.9,'x':0.5, 'xanchor': 'center','yanchor': 'top'},
+    showlegend=False,autosize=True,annotations=[dict(text='Attrition',  font_size=20, showarrow=False)],margin=dict(t=100,b=0,l=0,r=0),height=350,colorway=colors)
   return fig
 
 # gender_attrition_df
@@ -74,8 +77,9 @@ def churn_by_gender(df):
   gender_attrition_df=df.groupby(["Churn","gender"], as_index=False )["customerID"].count()
   gender_attrition_df.columns=['Churn','Gender','Customers']
   colors = ['skyblue','crimson']
-  fig=px.bar(gender_attrition_df,x='Gender',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,)
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.46),autosize=True,margin=dict(t=0,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  fig=px.bar(gender_attrition_df,x='Gender',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,
+    title='Churn by Gender')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.46),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
   return fig
 
 def churn_by_contract(df):
@@ -86,8 +90,9 @@ def churn_by_contract(df):
   contract_attrition_df.columns=['Churn','Contract','Customers']
   contract_attrition_df=contract_attrition_df.sort_values(by=['Contract', 'Customers'],ascending=True)
   colors = ['crimson','skyblue','teal']
-  fig=px.bar(contract_attrition_df,x='Contract',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group")
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=0,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  fig=px.bar(contract_attrition_df,x='Contract',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group",
+    title='Churn by Customer Contract Type')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
   return fig
 
 def churn_by_monthlycharges(df):
@@ -97,13 +102,14 @@ def churn_by_monthlycharges(df):
   colors = ['teal','crimson']
   fig = ff.create_distplot([no_churn_dist,churn_dist], group_labels, bin_size=[1, .10],
                         curve_type='kde',  show_rug=False, colors=colors)# override default 'kde' or 'normal'
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=0,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  fig.update_layout(title={'text': 'Customer Churn Distribution by Monthly Charges','y':0.9,'x':0.5, 'xanchor': 'center','yanchor': 'top'},
+  legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=50,b=0,l=0,r=0)) #use barmode='stack' when stacking,
   return fig
 
 def tenure_charges_correlation(df):
   df_correlation=df[['tenure','MonthlyCharges','TotalCharges']].corr()
-  fig=px.imshow(df_correlation)
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
+  fig=px.imshow(df_correlation,title='Tenure, Monthly and Total Charges Correlation')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
   return fig
 
 def churn_by_citizenship(df):
@@ -114,16 +120,18 @@ def churn_by_citizenship(df):
   citizenship_attrition_df.columns=['Churn','Citizenship','Customers']
   citizenship_attrition_df=citizenship_attrition_df.sort_values(by=['Citizenship', 'Customers'],ascending=False)
   colors = ['teal','skyblue','crimson']
-  fig=px.bar(citizenship_attrition_df,x='Customers',y=['Citizenship'],color='Churn',text='Customers',orientation="h",color_discrete_sequence=colors,barmode="group")
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
+  fig=px.bar(citizenship_attrition_df,x='Customers',y=['Citizenship'],color='Churn',text='Customers',orientation="h",color_discrete_sequence=colors,barmode="group",
+    title='Churn by Citizenship')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
   return fig
 
 def churn_by_tenure(df):
   tenure_attrition_df=df.groupby( [ "Churn","tenure"], as_index=False )["customerID"].count()
   tenure_attrition_df.columns=['Churn','Tenure','Customers']
   colors = ['skyblue','crimson']
-  fig = px.treemap(tenure_attrition_df, path=['Churn', 'Tenure'], values='Customers',color_discrete_sequence=colors)
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=0,b=0,l=0,r=0)) 
+  fig = px.treemap(tenure_attrition_df, path=['Churn', 'Tenure'], values='Customers',color_discrete_sequence=colors,
+    title='Churn by Customer Tenure')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) 
   return fig
 
 def data_summary(df):
@@ -138,6 +146,19 @@ def data_summary(df):
   return fig
 
 
+def churn_by_payment_method(df):
+  PaymentMethod_attrition_df=df.groupby( [ "Churn","PaymentMethod"], as_index=False )["customerID"].count()
+  PaymentMethod_base_df=df.groupby(["PaymentMethod"], as_index=False )["customerID"].count()
+  PaymentMethod_base_df['Churn']='Customer Base'
+  PaymentMethod_attrition_df=PaymentMethod_attrition_df.append(PaymentMethod_base_df, ignore_index = True) 
+  PaymentMethod_attrition_df.columns=['Churn','PaymentMethod','Customers']
+  PaymentMethod_attrition_df=PaymentMethod_attrition_df.sort_values(by=['PaymentMethod', 'Customers'],ascending=True)
+  colors = ['crimson','skyblue','teal']
+  fig=px.bar(PaymentMethod_attrition_df,x='PaymentMethod',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group",
+    title='Churn by Payment Method')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  return fig  
+
 def churn_by_techsupport(df):
   techsupport_attrition_df=df.groupby( [ "Churn","TechSupport"], as_index=False )["customerID"].count()
   techsupport_base_df=df.groupby(["TechSupport"], as_index=False )["customerID"].count()
@@ -146,10 +167,10 @@ def churn_by_techsupport(df):
   techsupport_attrition_df.columns=['Churn','TechSupport','Customers']
   techsupport_attrition_df=techsupport_attrition_df.sort_values(by=['TechSupport', 'Customers'],ascending=True)
   colors = ['crimson','skyblue','teal']
-  fig=px.bar(techsupport_attrition_df,x='TechSupport',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group")
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=0,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  fig=px.bar(techsupport_attrition_df,x='TechSupport',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group",
+    title='Churn by Tech Support')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
   return fig
-
 
 ####3 MODELING ####
 def feature_correlation(df):
@@ -162,27 +183,29 @@ def feature_correlation(df):
   churn_corr_df=pd.DataFrame(df.corr()['Churn'])
   churn_corr_df.reset_index(level=0, inplace=True)
   churn_corr_df.columns=['Features','Correlation']
-  churn_corr_df["Color"] = np.where(churn_corr_df["Correlation"]<0, 'negative', 'positive')
+  churn_corr_df["Correlation Type"] = np.where(churn_corr_df["Correlation"]<0, 'negative', 'positive')
   churn_corr_df=churn_corr_df.sort_values(by=['Correlation'],ascending=False)
+  churn_corr_df=churn_corr_df[~churn_corr_df['Features'].isin(['Churn'])]
   colors = ['skyblue','orange']
-  fig=px.bar(churn_corr_df,x='Features',y='Correlation',color='Color',text='Correlation',color_discrete_sequence=colors)
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
+  fig=px.bar(churn_corr_df,x='Features',y='Correlation',color='Correlation Type',text='Correlation',color_discrete_sequence=colors,
+    title='Features Correlation')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
   return fig
 
 
 def feature_importance(feat_importance_df):
   feat_importance_df=feat_importance_df.sort_values(by=['Importance'],ascending=False)
   # feat_importance_df.columns=['Features','Importance']
-  fig=px.bar(feat_importance_df,x='Features',y='Importance',text='Importance',color='Importance',height=650)
-  fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.01),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
+  fig=px.bar(feat_importance_df,x='Features',y='Importance',text='Importance',color='Importance',height=650,title='Random Forest Feature Importance')
+  fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.01),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
   return fig
 
 def telco_churn_model_metrics_summary(telco_churm_metrics_df):
   unpivoted_metric_df=telco_churm_metrics_df[telco_churm_metrics_df['Type']=='Metric'][['Model','Accuracy','Precision','Recall','F_1_Score','AUC_Score']]
   unpivoted_metric_df=unpivoted_metric_df.melt(id_vars=['Model'], var_name='Metrics', value_name='Score').sort_values(by=['Score'],ascending=True)
   colors = ['crimson','skyblue','teal','orange']
-  fig=px.bar(unpivoted_metric_df,x='Metrics',y='Score',color='Model',text='Score',color_discrete_sequence=colors,barmode="group")
-  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.01),autosize=True,margin=dict(t=0,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  fig=px.bar(unpivoted_metric_df,x='Metrics',y='Score',color='Model',text='Score',color_discrete_sequence=colors,barmode="group",title='Model Perforance Metrics')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.01),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
   return fig
 
 def uac_roc(telco_churm_metrics_df):
@@ -198,7 +221,8 @@ def uac_roc(telco_churm_metrics_df):
                                   line = dict(color='orange', width=2),line_shape='spline'))
   uac_roc_fig.add_trace(go.Scatter(x=np.array([0., 1.]), y=np.array([0., 1.]),name='Random Gues',
                                   line = dict(color='firebrick', width=4, dash='dash')))
-  uac_roc_fig.update_layout(legend=dict(yanchor="bottom",y=0.05,xanchor="right",x=0.95),autosize=True,margin=dict(t=0,b=0,l=0,r=0))
+  uac_roc_fig.update_layout(title={'text': 'AUC-ROC Model Evaluation','y':0.9,'x':0.5, 'xanchor': 'center','yanchor': 'top'},
+    legend=dict(yanchor="bottom",y=0.05,xanchor="right",x=0.95),autosize=True,margin=dict(t=70,b=0,l=0,r=0))
   return uac_roc_fig
 
 def random_forest_confusion_matrix(telco_churm_metrics_df):
@@ -248,10 +272,10 @@ layout=dbc.Container([
    dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Telco Customer Churn", active=True,href="/apps/telco_customer_churn")),
-        dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
-        dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
-        dbc.NavItem(dbc.NavLink("Analyse", active=True,href="#")),
-        dbc.NavItem(dbc.NavLink("Model", active=True, href="#"))
+        # dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
+        # dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
+        # dbc.NavItem(dbc.NavLink("Analyse", active=True,href="#")),
+        # dbc.NavItem(dbc.NavLink("Model", active=True, href="#"))
     ], 
     brand="Qaml",
     brand_href="/apps/home",
@@ -363,9 +387,9 @@ dbc.Tab(
                           md=3),
    #3. 
                  dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='churn-by-techsupport',
-                            figure=churn_by_techsupport(df),
+                    dcc.Graph(  
+                            id='churn-by-contract', 
+                            figure=churn_by_contract(df),
                             config={'displayModeBar': False }  
                             ),
                           ] 
@@ -459,6 +483,37 @@ dbc.Tab(
 
             ]
         ),
+
+              dbc.Row(
+            [ 
+            dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='churn-by-techsupport',
+                            figure=churn_by_techsupport(df),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=5),
+            dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='churn-by-payment_method',
+                            figure=churn_by_payment_method(df),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=7),
+
+            ]
+        ),
+     
      
 
        
@@ -1038,4 +1093,6 @@ def callback_on_completion(iscompleted, filenames, upload_id):
                 align='left'),cells=dict(values=[pred_data['customerID'], pred_data['Prediction'], pred_data['Prediction Confidence']],
                fill_color='lavender',align='left'))])
   fig.update_layout(showlegend=False,autosize=True,margin=dict(t=0,b=0,l=0,r=0),height=350)
+  shutil.rmtree(TELCO_CHURN_FILE_UPLOADS_DATA_PATH)
+  os.makedirs(TELCO_CHURN_FILE_UPLOADS_DATA_PATH)
   return fig
