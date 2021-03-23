@@ -891,24 +891,77 @@ dbc.Tab(
                                   text_completed='File Sucessfully Uploaded: ',
                                      ),
                   ),
-                 md=6),
+                 md=5),
+
 
                 dbc.Col(html.Div(
+                    dbc.Button("Batch Predict", id="create-analysis-input", className="mr-2", color="info")
+                  ),
+                 md=2),
+
+                 dbc.Col(html.Div(
                     dbc.Alert(id="prediction-output", color="success"),
                   ),
-                 md=6),
+                 md=5),
             ]
         ),
 
+# ========= Remove the table =============
   dbc.Row(
             [
                 dbc.Col(html.Div(
-                    dcc.Graph(id='prediction-output-table',figure={})
+                    # dcc.Graph(id='prediction-output-table',figure={})
                   ),
                  md=12)
             ]
         ),
 
+# =========== End Remove Table ================
+
+ #1.
+        dbc.Row(
+            [ 
+                dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='churn-distribution-pred',
+                            figure={},
+                            config={'displayModeBar': False },
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=3),
+           #2.
+                  dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='churn-by-gender-pred',
+                            figure={},  
+                            config={'displayModeBar': False } 
+                            ),
+                          ] 
+                          ),  
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=3),
+   #3. 
+                 dbc.Col(html.Div([                  
+                    dcc.Graph(  
+                            id='churn-by-contract-pred', 
+                            figure={},
+                            config={'displayModeBar': False }  
+                            ),
+                          ] 
+                          ),  
+                          style={
+                                'margin-top': '30px'  
+                                },
+                          md=6),
+
+            ]
+        ),
 
        
         # footer
@@ -920,7 +973,14 @@ dbc.Tab(
             'text-align':'center',
             'backgroundColor': 'rgba(120,120,120,0.2)'
             },
-                 md=12)
+                 md=12),
+
+                 dbc.Col(
+                 # Hidden div inside the app that stores the intermediate value
+              html.Div(id='global-dataframe'),
+          # , style={'display': 'none'}
+                  style={'display': 'none'},
+                 md=0),
             ]
         ),
         #end footer
@@ -942,6 +1002,35 @@ label="Ml Prediction"), # Ml Prediction  Tab Name
 	)
 
 
+# @app.callback(
+#   Output('global-dataframe', 'children'), 
+#   Input('fetch-data-input','n_clicks'),
+#   State('tweet-topics-input','value'),
+#   State('number-of-tweets-input','value'),
+#   )
+# def global_dataframe(n,tweet_topics,number_of_tweets):
+
+#   date_since =pd.to_datetime('today').strftime("%Y-%m-%d")
+#   #Define the cursor
+#   tweets = tw.Cursor(api.search, q=tweet_topics, lang="en", since=date_since).items(int(number_of_tweets))
+#   # Clean text
+#   text_preprocess = lambda x: re.compile('\#').sub('', re.compile('RT @').sub('@', x).strip())
+#   # Create DataFrame 
+#   users_locs = [[tweet.user.screen_name,tweet.user.name,tweet.user.verified,
+#            tweet.user.followers_count,tweet.user.friends_count,tweet.user.listed_count,
+#            tweet.retweet_count,tweet.favorite_count,tweet.retweeted,tweet.entities,
+#            tweet.user.favourites_count,
+#            tweet.user.location,tweet.created_at,tweet.text,
+#            re.sub(r"http\S+", "", re.sub('@[^\s]+','',text_preprocess(tweet.text))),
+#            TextBlob(re.sub(r"http\S+", "", re.sub('@[^\s]+','',text_preprocess(tweet.text)))).sentiment[0],
+#            TextBlob(re.sub(r"http\S+", "", re.sub('@[^\s]+','',text_preprocess(tweet.text)))).sentiment[1]
+#                 ] for tweet in tweets]
+#   cols=columns=['screen_name','name','user_verification','followers_count','friends_count',
+#                 'listed_count','retweet_count','favorite_count','retweeted','entities','favourites_count',
+#                 'location','created_at','text','clean_text','sentiment_polarity','sentiment_subjectivity']
+#   tweet_df = pd.DataFrame(data=users_locs, columns=cols)
+#   tweet_df["sentiment_polarity_color"] = np.where(tweet_df["sentiment_polarity"]<0, 'red', 'green')
+#   return tweet_df.to_json(date_format='iso', orient='split')
 
 
 
@@ -1026,7 +1115,8 @@ def on_button_click(n,gender,citizen,partner,dependents,phone_service,tenure,mul
 
 
 @app.callback(
-    Output("prediction-output-table", "figure"), 
+    # Output("prediction-output-table", "figure"), 
+    Output('global-dataframe', 'children'), 
     [Input('upload-file', 'isCompleted'),
      # Input("predict-input", "n_clicks")
      ],
@@ -1082,11 +1172,64 @@ def callback_on_completion(iscompleted, filenames, upload_id):
   pred_data['Prediction Confidence']=pred_confidence
 
   print(pred_data.head())
+  return pred_data.to_json(date_format='iso', orient='split')
 
-  fig = go.Figure(data=[go.Table(header=dict(values=list(pred_data[['customerID','Prediction','Prediction Confidence']]),fill_color='paleturquoise',
-                align='left'),cells=dict(values=[pred_data['customerID'], pred_data['Prediction'], pred_data['Prediction Confidence']],
-               fill_color='lavender',align='left'))])
-  fig.update_layout(showlegend=False,autosize=True,margin=dict(t=0,b=0,l=0,r=0),height=350)
-  shutil.rmtree(TELCO_CHURN_FILE_UPLOADS_DATA_PATH)
-  os.makedirs(TELCO_CHURN_FILE_UPLOADS_DATA_PATH)
+  # fig = go.Figure(data=[go.Table(header=dict(values=list(pred_data[['customerID','Prediction','Prediction Confidence']]),fill_color='paleturquoise',
+  #               align='left'),cells=dict(values=[pred_data['customerID'], pred_data['Prediction'], pred_data['Prediction Confidence']],
+  #              fill_color='lavender',align='left'))])
+  # fig.update_layout(showlegend=False,autosize=True,margin=dict(t=0,b=0,l=0,r=0),height=350)
+  # shutil.rmtree(TELCO_CHURN_FILE_UPLOADS_DATA_PATH)
+  # os.makedirs(TELCO_CHURN_FILE_UPLOADS_DATA_PATH)
+  # return fig
+
+# ==== Prediction Analysis==========
+
+@app.callback(
+Output('churn-distribution-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_distribution_pred(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  attrition_df=df.groupby(["Churn"], as_index=False )["customerID"].count()
+  colors = ['skyblue','crimson']
+  fig = go.Figure(data=[go.Pie(labels=attrition_df['Churn'].tolist(), values=attrition_df['customerID'].tolist(), hole=.3)])
+  fig.update_layout(title={'text': 'Customer Churn Distribution','y':0.9,'x':0.5, 'xanchor': 'center','yanchor': 'top'},
+    showlegend=False,autosize=True,annotations=[dict(text='Attrition',  font_size=20, showarrow=False)],margin=dict(t=100,b=0,l=0,r=0),height=350,colorway=colors)
+  return fig
+
+
+@app.callback(
+Output('churn-by-gender-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_by_gender(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  gender_attrition_df=df.groupby(["Churn","gender"], as_index=False )["customerID"].count()
+  gender_attrition_df.columns=['Churn','Gender','Customers']
+  colors = ['skyblue','crimson']
+  fig=px.bar(gender_attrition_df,x='Gender',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,
+    title='Churn by Gender')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.46),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  return fig
+
+
+@app.callback(
+Output('churn-by-contract-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_by_contract(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  contract_attrition_df=df.groupby(["Churn","Contract"], as_index=False )["customerID"].count()
+  contract_base_df=df.groupby(["Contract"], as_index=False )["customerID"].count()
+  contract_base_df['Churn']='Customer Base'
+  contract_attrition_df=contract_attrition_df.append(contract_base_df, ignore_index = True) 
+  contract_attrition_df.columns=['Churn','Contract','Customers']
+  contract_attrition_df=contract_attrition_df.sort_values(by=['Contract', 'Customers'],ascending=True)
+  colors = ['crimson','skyblue','teal']
+  fig=px.bar(contract_attrition_df,x='Contract',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group",
+    title='Churn by Customer Contract Type')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
   return fig
