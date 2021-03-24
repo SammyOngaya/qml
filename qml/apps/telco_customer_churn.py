@@ -963,6 +963,86 @@ dbc.Tab(
             ]
         ),
 
+ dbc.Row(
+            [ 
+                dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='revenue-distribution-pred',
+                            figure={},
+                            config={'displayModeBar': False },
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=4),
+           #2.
+                  dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='churn-by-techsupport-pred',
+                            figure={},  
+                            config={'displayModeBar': False } 
+                            ),
+                          ] 
+                          ),  
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=8),
+
+            ]
+        ),
+
+  dbc.Row(
+            [ 
+                dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='citizenship-distribution-pred',
+                            figure={},
+                            config={'displayModeBar': False },
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+           #2.
+                  dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='churn-by-payment_method-pred',
+                            figure={},  
+                            config={'displayModeBar': False } 
+                            ),
+                          ] 
+                          ),  
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+
+            ]
+        ),
+
+    dbc.Row(
+            [ 
+                dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='churn-by-tenure-pred',
+                            figure={},  
+                            config={'displayModeBar': False } 
+                            ),
+                          ] 
+                          ),  
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=12),
+
+            ]
+        ),
+       
        
         # footer
     dbc.Row(
@@ -1204,7 +1284,7 @@ Output('churn-by-gender-pred' , 'figure'),
 Input('create-analysis-input','n_clicks'),
 State('global-dataframe', 'children'),
  prevent_initial_call=False)
-def churn_by_gender(n,jsonified_global_dataframe):
+def churn_by_gender_pred(n,jsonified_global_dataframe):
   df=pd.read_json(jsonified_global_dataframe, orient='split')
   gender_attrition_df=df.groupby(["Churn","gender"], as_index=False )["customerID"].count()
   gender_attrition_df.columns=['Churn','Gender','Customers']
@@ -1220,7 +1300,7 @@ Output('churn-by-contract-pred' , 'figure'),
 Input('create-analysis-input','n_clicks'),
 State('global-dataframe', 'children'),
  prevent_initial_call=False)
-def churn_by_contract(n,jsonified_global_dataframe):
+def churn_by_contract_pred(n,jsonified_global_dataframe):
   df=pd.read_json(jsonified_global_dataframe, orient='split')
   contract_attrition_df=df.groupby(["Churn","Contract"], as_index=False )["customerID"].count()
   contract_base_df=df.groupby(["Contract"], as_index=False )["customerID"].count()
@@ -1232,4 +1312,98 @@ def churn_by_contract(n,jsonified_global_dataframe):
   fig=px.bar(contract_attrition_df,x='Contract',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group",
     title='Churn by Customer Contract Type')
   fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  return fig
+
+
+@app.callback(
+Output('revenue-distribution-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_by_revenue_pred(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  totalcharges_attrition_df=df.groupby( ["Churn"], as_index=False )["TotalCharges"].sum()
+  totalcharges_attrition_df=totalcharges_attrition_df.sort_values(by=['TotalCharges'],ascending=True)
+  totalcharges_attrition_df.columns=['Churn','Revenue']
+  totalcharges_attrition_df=totalcharges_attrition_df.round(2)
+  colors = ['crimson','skyblue']
+  fig=px.bar(totalcharges_attrition_df,x='Churn',y='Revenue',color='Churn',text='Revenue',color_discrete_sequence=colors,
+    title='Churn by Revenue')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+  return fig
+
+@app.callback(
+Output('churn-by-techsupport-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_by_techsupport_pred(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  techsupport_attrition_df=df.groupby( [ "Churn","TechSupport"], as_index=False )["customerID"].count()
+  techsupport_base_df=df.groupby(["TechSupport"], as_index=False )["customerID"].count()
+  techsupport_base_df['Churn']='Customer Base'
+  techsupport_attrition_df=techsupport_attrition_df.append(techsupport_base_df, ignore_index = True) 
+  techsupport_attrition_df.columns=['Churn','TechSupport','Customers']
+  techsupport_attrition_df=techsupport_attrition_df.sort_values(by=['TechSupport', 'Customers'],ascending=True)
+  colors = ['crimson','skyblue','teal']
+  fig=px.bar(techsupport_attrition_df,x='TechSupport',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group",
+    title='Churn by Tech Support')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  return fig
+
+
+@app.callback(
+Output('churn-by-payment_method-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_by_payment_method_pred(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  PaymentMethod_attrition_df=df.groupby( [ "Churn","PaymentMethod"], as_index=False )["customerID"].count()
+  PaymentMethod_base_df=df.groupby(["PaymentMethod"], as_index=False )["customerID"].count()
+  PaymentMethod_base_df['Churn']='Customer Base'
+  PaymentMethod_attrition_df=PaymentMethod_attrition_df.append(PaymentMethod_base_df, ignore_index = True) 
+  PaymentMethod_attrition_df.columns=['Churn','PaymentMethod','Customers']
+  PaymentMethod_attrition_df=PaymentMethod_attrition_df.sort_values(by=['PaymentMethod', 'Customers'],ascending=True)
+  colors = ['crimson','skyblue','teal']
+  fig=px.bar(PaymentMethod_attrition_df,x='PaymentMethod',y='Customers',color='Churn',text='Customers',color_discrete_sequence=colors,barmode="group",
+    title='Churn by Payment Method')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) #use barmode='stack' when stacking,
+  return fig  
+
+
+@app.callback(
+Output('citizenship-distribution-pred-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_by_citizenship_pred(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  citizenship_attrition_df=df.groupby( [ "Churn","SeniorCitizen"], as_index=False )["customerID"].count()
+  citizenship_base_df=df.groupby(["SeniorCitizen"], as_index=False )["customerID"].count()
+  citizenship_base_df['Churn']='Customer Base'
+  citizenship_attrition_df=citizenship_attrition_df.append(citizenship_base_df, ignore_index = True) 
+  citizenship_attrition_df.columns=['Churn','Citizenship','Customers']
+  citizenship_attrition_df=citizenship_attrition_df.sort_values(by=['Citizenship', 'Customers'],ascending=False)
+  colors = ['teal','skyblue','crimson']
+  fig=px.bar(citizenship_attrition_df,x='Customers',y=['Citizenship'],color='Churn',text='Customers',orientation="h",color_discrete_sequence=colors,barmode="group",
+    title='Churn by Citizenship')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+  return fig
+
+
+@app.callback(
+Output('churn-by-tenure-pred' , 'figure'),
+Input('create-analysis-input','n_clicks'),
+State('global-dataframe', 'children'),
+ prevent_initial_call=False)
+def churn_by_tenure_pred(n,jsonified_global_dataframe):
+  df=pd.read_json(jsonified_global_dataframe, orient='split')
+  tenure_attrition_df=df.groupby( [ "Churn","tenure"], as_index=False )["customerID"].count()
+  tenure_attrition_df.columns=['Churn','Tenure','Customers']
+  colors = ['skyblue','crimson']
+  tenure_attrition_df=tenure_attrition_df.round(0)
+  fig = px.treemap(tenure_attrition_df, path=['Churn', 'Tenure'], values='Customers',color_discrete_sequence=colors,
+    title='Churn by Customer Tenure')
+  fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) 
   return fig
