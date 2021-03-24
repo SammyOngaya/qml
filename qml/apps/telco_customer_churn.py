@@ -58,6 +58,7 @@ def distribution_by_revenue(df):
   totalcharges_attrition_df=totalcharges_attrition_df.sort_values(by=['TotalCharges'],ascending=True)
   totalcharges_attrition_df.columns=['Churn','Revenue']
   colors = ['crimson','skyblue']
+  totalcharges_attrition_df=totalcharges_attrition_df.round(0)
   fig=px.bar(totalcharges_attrition_df,x='Churn',y='Revenue',color='Churn',text='Revenue',color_discrete_sequence=colors,
     title='Churn by Revenue')
   fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.40),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
@@ -129,6 +130,7 @@ def churn_by_tenure(df):
   tenure_attrition_df=df.groupby( [ "Churn","tenure"], as_index=False )["customerID"].count()
   tenure_attrition_df.columns=['Churn','Tenure','Customers']
   colors = ['skyblue','crimson']
+  tenure_attrition_df=tenure_attrition_df.round(0)
   fig = px.treemap(tenure_attrition_df, path=['Churn', 'Tenure'], values='Customers',color_discrete_sequence=colors,
     title='Churn by Customer Tenure')
   fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.50),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) 
@@ -1373,7 +1375,7 @@ def churn_by_payment_method_pred(n,jsonified_global_dataframe):
 
 
 @app.callback(
-Output('citizenship-distribution-pred-pred' , 'figure'),
+Output('citizenship-distribution-pred' , 'figure'),
 Input('create-analysis-input','n_clicks'),
 State('global-dataframe', 'children'),
  prevent_initial_call=False)
