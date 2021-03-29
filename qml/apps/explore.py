@@ -8,6 +8,8 @@ import pandas as pd
 import pathlib
 import uuid
 
+import dash_table
+
 from app import app, server
 
 
@@ -16,10 +18,14 @@ PATH=pathlib.Path(__file__).parent
 # du.configure_upload(app, TELCO_CHURN_FILE_UPLOADS_DATA_PATH, use_upload_id=False)
 
 
+df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv')
+
+
 layout=dbc.Container([
 
    dbc.NavbarSimple(
     children=[
+        dbc.NavItem(dbc.NavLink("Telco Customer Churn", active=True,href="/apps/telco_customer_churn")),
         dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
         dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
         dbc.NavItem(dbc.NavLink("Analyse", active=True,href="#")),
@@ -60,7 +66,7 @@ layout=dbc.Container([
 			style={
             'margin-top': '30px'
             },
-                	md=4),
+                	md=3),
    #2.
                       dbc.Col(html.Div([
                     html.Div(id='output-stats'),
@@ -72,17 +78,36 @@ layout=dbc.Container([
             'margin-top': '30px',
             'font-size':'20px'
             },
-                  md=4),
+                  md=1),
    #3. 
-                       dbc.Col(html.Div(
-              [
-                # html.H6("Tweet Analysis") , 
-                   ]
-                  ),
+                       dbc.Col(
+
+
+                    dash_table.DataTable(
+                    id='table',
+                    columns=[{"name": i, "id": i} for i in df.columns],
+                    data=df.to_dict('records'),
+
+                    editable=True,
+                    filter_action="native",
+                    sort_action="native",
+                    sort_mode="multi",
+                    column_selectable="single",
+                    row_selectable="multi",
+                    row_deletable=True,
+                    selected_columns=[],
+                    selected_rows=[],
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 10,
+
+                    ),
+
+
       style={
             'margin-top': '30px'
             },
-                  md=4),
+                  md=8),
 
             ]
         ),

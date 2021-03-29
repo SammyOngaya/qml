@@ -13,6 +13,7 @@ layout=dbc.Container([
    dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Telco Customer Churn", active=True,href="/apps/telco_customer_churn")),
+        dbc.NavItem(dbc.NavLink("Customer Lifetime Value", active=True,href="/apps/customer_lifetime_value")),
         # dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
         # dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
         # dbc.NavItem(dbc.NavLink("Analyse", active=True,href="#")),
