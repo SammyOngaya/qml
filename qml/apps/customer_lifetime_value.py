@@ -135,17 +135,17 @@ dbc.Tab(
       style={'margin-bottom': '7px','margin-left':'3px','margin-right':'5px'}),
 
 
-        dbc.Form(
-            [
-                dbc.FormGroup(
-                    [
-                       dbc.Button("Apply to Model", id="create-analysis-input", className="mr-2", color="info")
-                    ],
-                    className="mr-2",
-                ),
-            ],
-            inline=True,
-            ),
+        # dbc.Form(
+        #     [
+        #         dbc.FormGroup(
+        #             [
+        #                dbc.Button("Apply to Model", id="create-analysis-input", className="mr-2", color="info")
+        #             ],
+        #             className="mr-2",
+        #         ),
+        #     ],
+        #     inline=True,
+        #     ),
     ],
     md=3,
     style={'margin-bottom': '2px','margin-top': '2px','margin-left': '0px','border-style': 'ridge','border-color': 'green'}
@@ -168,7 +168,6 @@ dbc.Tab(
   style={'margin-bottom': '1px'}),
 html.Hr(),
 # row 2 start
-
 
    #1.
         dbc.Row(
@@ -489,10 +488,15 @@ def daily_revenue(countries):
   Output('customer-lifetime-value-output', 'children'), 
   Output('forecasted-revenue-output', 'children'), 
   Output('customer-lifetime-value-graph-output','figure'),
-  Input('country-input','value'),
+  Input('number-of-clv-months-input','value'),
   )
-def customer_lifetime_value(countries):
-    t=12
+def customer_lifetime_value(clv_months):
+    t=0
+    if t=='':
+      t=12
+    else:
+      t=int(clv_months)
+
     last_order_date=df['Date'].max()
     lifetimes_txn_data = summary_data_from_transaction_data(df, 'CustomerID', 'Date', monetary_value_col='TotalSales', observation_period_end=last_order_date).reset_index()
     lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['CustomerID']!='nan']
@@ -522,7 +526,7 @@ def customer_lifetime_value(countries):
     revenue_per_customers_df=lifetimes_txn_data.groupby('Customer No.', as_index=False )['Customer Lifetime Value (CLV)'].sum().sort_values(by="Customer Lifetime Value (CLV)",ascending=False)
     revenue_per_customers_df=revenue_per_customers_df[revenue_per_customers_df['Customer No.']!='nan']
     fig=px.bar(revenue_per_customers_df.head(10),x='Customer No.',y='Customer Lifetime Value (CLV)',color='Customer No.',text='Customer Lifetime Value (CLV)',
-    title='Customer Lifetime Value (CLV)')
+    title='Customer Lifetime Value (CLV) for '+str(t)+' Months')
     fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.80),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
     return  dash_table.DataTable(
                     id='table',
