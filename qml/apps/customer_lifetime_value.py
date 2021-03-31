@@ -79,9 +79,9 @@ total_current_revenue_card = [
 forecasted_revenue_card = [
     dbc.CardBody(
         [
-            html.H1(round(df['TotalSales'].sum()/1000000,2), className="card-title"),
+            html.H1(id="forecasted-revenue-output", className="card-title"),
             html.P(
-                "Forecasted Revenue ($ M)",
+                "Cust. Lifetime Value ($ M)",
                 className="card-text",
             ),
         ],
@@ -161,26 +161,7 @@ dbc.Tab(
       style={'padding-left': '20px'}
       ),
     html.Hr(),
-      html.Div(
-                    dash_table.DataTable(
-                    id='table',
-                    columns=[{"name": i, "id": i} for i in df.columns],
-                    data=df.to_dict('records'),
-                    editable=True,
-                    filter_action="native",
-                    sort_action="native",
-                    sort_mode="multi",
-                    column_selectable="single",
-                    row_selectable="multi",
-                    row_deletable=True,
-                    selected_columns=[],
-                    selected_rows=[],
-                    page_action="native",
-                    page_current= 0,
-                    page_size= 10,
-
-                    ),
-      ),
+      html.Div(id='customer-lifetime-value-output'),
       
     ])
   ], no_gutters=True,
@@ -189,8 +170,7 @@ html.Hr(),
 # row 2 start
 
 
-
-    #1.
+   #1.
         dbc.Row(
             [ 
                 dbc.Col(
@@ -210,7 +190,7 @@ html.Hr(),
                  dbc.Col(
                   html.Div([                  
                     dcc.Graph(
-                            id='revenue-distribution-per-country',
+                            id='customer-lifetime-value-graph-output',
                             figure={},
                             config={'displayModeBar': False },
                             ),
@@ -504,3 +484,63 @@ def daily_revenue(countries):
     fig=px.bar(revenue_per_day_df,x='Day',y='Revenue',color='Revenue',text='Revenue',title='Revenue Dist')
     fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.80),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
     return fig
+
+@app.callback(
+  Output('customer-lifetime-value-output', 'children'), 
+  Output('forecasted-revenue-output', 'children'), 
+  Output('customer-lifetime-value-graph-output','figure'),
+  Input('country-input','value'),
+  )
+def customer_lifetime_value(countries):
+    t=12
+    last_order_date=df['Date'].max()
+    lifetimes_txn_data = summary_data_from_transaction_data(df, 'CustomerID', 'Date', monetary_value_col='TotalSales', observation_period_end=last_order_date).reset_index()
+    lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['CustomerID']!='nan']
+    bgf_model=BetaGeoFitter(penalizer_coef=0.0)
+    bgf_model.fit(lifetimes_txn_data['frequency'],lifetimes_txn_data['recency'],lifetimes_txn_data['T'])  
+    lifetimes_txn_data['predicted_num_of_txns'] = round(bgf_model.conditional_expected_number_of_purchases_up_to_time(t, lifetimes_txn_data['frequency'], lifetimes_txn_data['recency'], lifetimes_txn_data['T']),2)
+    lifetimes_txn_data=lifetimes_txn_data.sort_values(by='predicted_num_of_txns', ascending=False)
+    lifetimes_txn_data.head(t)
+    # Get customers with frequency >0
+    lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['frequency']>0]
+    ggf_model = GammaGammaFitter(penalizer_coef = 0)
+    ggf_model.fit(lifetimes_txn_data['frequency'],lifetimes_txn_data['monetary_value'])
+    lifetimes_txn_data['predicted_value_of_txn'] = round(ggf_model.conditional_expected_average_profit(
+        lifetimes_txn_data['frequency'],lifetimes_txn_data['monetary_value']), 2)
+    rate=0.01 # monthly discount rate ~ 12.7% annually
+    lifetimes_txn_data['CLV'] = round(ggf_model.customer_lifetime_value(
+        bgf_model, #the model to use to predict the number of future transactions
+        lifetimes_txn_data['frequency'],
+        lifetimes_txn_data['recency'],
+        lifetimes_txn_data['T'],
+        lifetimes_txn_data['monetary_value'],
+        time=t,
+        discount_rate=rate
+    ), 2)
+    lifetimes_txn_data.columns=['Customer No.','Frequency','Recency','Age (T)','Monetary Value','Predicted No. of Txns','Predicted Value of Txns','Customer Lifetime Value (CLV)']
+    # figure
+    revenue_per_customers_df=lifetimes_txn_data.groupby('Customer No.', as_index=False )['Customer Lifetime Value (CLV)'].sum().sort_values(by="Customer Lifetime Value (CLV)",ascending=False)
+    revenue_per_customers_df=revenue_per_customers_df[revenue_per_customers_df['Customer No.']!='nan']
+    fig=px.bar(revenue_per_customers_df.head(10),x='Customer No.',y='Customer Lifetime Value (CLV)',color='Customer No.',text='Customer Lifetime Value (CLV)',
+    title='Customer Lifetime Value (CLV)')
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.80),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return  dash_table.DataTable(
+                    id='table',
+                    columns=[{"name": i, "id": i} for i in lifetimes_txn_data.columns],
+                    data=lifetimes_txn_data.to_dict('records'),
+                    editable=True,
+                    filter_action="native",
+                    sort_action="native",
+                    sort_mode="multi",
+                    column_selectable="single",
+                    row_selectable="multi",
+                    row_deletable=True,
+                    selected_columns=[],
+                    selected_rows=[],
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 10,
+
+                    ),round(lifetimes_txn_data['Customer Lifetime Value (CLV)'].sum()/1000000,2), fig
+
+
