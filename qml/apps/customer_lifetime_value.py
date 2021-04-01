@@ -31,7 +31,7 @@ from app import app, server
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
-df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail Processed.csv"),encoding="cp1252")
+df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail.csv"),encoding="cp1252")
 df=df.drop(['Description'], axis=1)
 df['CustomerID'] = df['CustomerID'].astype(int)
 df['CustomerID'] = df['CustomerID'].astype(str) 
@@ -128,7 +128,7 @@ dbc.Tab(
     # start sidebar
     dbc.Col([
 
-      dbc.Input(id="number-of-clv-months-input", placeholder="Enter No of Months for CLV...", type="Number", min=1, max=48,
+      dbc.Input(id="number-of-clv-months-input", placeholder="Enter No of Months for CLV...", type="Number", value=12, min=1, max=48,
         style={'margin-left':'3px','margin-right':'5px','margin-top':'3px'}),
             html.Br(),
       dcc.Dropdown(id='country-input',multi=True, value=df['Country'].unique()[1:11],
@@ -492,7 +492,7 @@ def daily_revenue(countries):
   Input('number-of-clv-months-input','value'),
   )
 def customer_lifetime_value(clv_months):
-    t=0
+    t=12
     if t=='':
       t=12
     else:
