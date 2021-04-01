@@ -113,11 +113,11 @@ layout=dbc.Container([
 ),#end navigation
 
 
-dbc.Tabs(
-    [
+# dbc.Tabs(
+#     [
 
-# Explore Data Tab
-dbc.Tab(
+# # Explore Data Tab
+# dbc.Tab(
   # Explore Data Body
    html.Div(
     [
@@ -313,89 +313,16 @@ html.Hr(),
             'padding-left': '3px',
             'padding-right': '3px'
             },
-),
-  #End  Customer Lifetime Value Body
-label="Customer Lifetime Value"), # Customer Lifetime Value Tab Name
-
-
-# Ml Modeling Tab
-dbc.Tab(
-  # Ml Modeling Body
-   html.Div(
-    [
-    #1.
-        dbc.Row(
-            [ 
-            dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='feature-correlation',
-                            figure={},
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=12),
-
-            ]
-        ),
-
-# 4. 
-       dbc.Row(
-            [ 
-            dbc.Col(html.Div([                  
-                    html.H1("Tab 2"),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=12),
-
-            ]
-        ),
-
-       
-
-        # footer
-    dbc.Row(
-            [
-                dbc.Col(html.Div("@galaxydataanalytics "),
-                  style={
-            'margin-top': '2px',
-            'text-align':'center',
-            'backgroundColor': 'rgba(120,120,120,0.2)'
-            },
-                 md=12),
-
-                 dbc.Col(
-                 # Hidden div inside the app that stores the intermediate value
-              html.Div(id='global-dataframe'),
-          # , style={'display': 'none'}
-                  style={'display': 'none'},
-                 md=0),
-            ]
-        ),
-        #end footer
-
-
-
-     
-    ],
-        style={
-            'padding-left': '3px',
-            'padding-right': '3px'
-            },
-),
-  #End  Ml Modeling Body
-label="Ml Modeling"), # Ml Modeling  Tab Name
+# ),
+#   #End  Customer Lifetime Value Body
+# label="Customer Lifetime Value"), # Customer Lifetime Value Tab Name
 
 
 
 
-    ]
+
+
+    # ]
 )
 
   ],
