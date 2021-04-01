@@ -96,7 +96,7 @@ layout=dbc.Container([
 
    dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Telco Customer Churn", active=True,href="/apps/telco_customer_churn")),
+        dbc.NavItem(dbc.NavLink("Telco Customer Churn", active=False,href="/apps/telco_customer_churn")),
         dbc.NavItem(dbc.NavLink("Customer Lifetime Value", active=True,href="/apps/customer_lifetime_value")),
         # dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
         # dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
@@ -112,13 +112,6 @@ layout=dbc.Container([
 
 ),#end navigation
 
-
-# dbc.Tabs(
-#     [
-
-# # Explore Data Tab
-# dbc.Tab(
-  # Explore Data Body
    html.Div(
     [
 
@@ -134,22 +127,9 @@ layout=dbc.Container([
       dcc.Dropdown(id='country-input',multi=True, value=df['Country'].unique()[1:11],
       options=[{'label':x,'value':x} for x in sorted(df['Country'].unique())],
       style={'margin-bottom': '7px','margin-left':'3px','margin-right':'5px'}),
-
-
-        # dbc.Form(
-        #     [
-        #         dbc.FormGroup(
-        #             [
-        #                dbc.Button("Apply to Model", id="create-analysis-input", className="mr-2", color="info")
-        #             ],
-        #             className="mr-2",
-        #         ),
-        #     ],
-        #     inline=True,
-        #     ),
     ],
     md=3,
-    style={'margin-bottom': '2px','margin-top': '2px','margin-left': '0px','border-style': 'ridge','border-color': 'green'}
+    style={'margin-bottom': '2px','margin-top': '2px','margin-left': '0px','border-style': 'ridge','border-color': 'teal'}
     ),
     # end sidebar
   dbc.Col([
@@ -200,7 +180,6 @@ html.Hr(),
                                 'margin-top': '30px'
                                 },
                           md=6),
-
             ]
         ),     
 
@@ -313,16 +292,6 @@ html.Hr(),
             'padding-left': '3px',
             'padding-right': '3px'
             },
-# ),
-#   #End  Customer Lifetime Value Body
-# label="Customer Lifetime Value"), # Customer Lifetime Value Tab Name
-
-
-
-
-
-
-    # ]
 )
 
   ],
