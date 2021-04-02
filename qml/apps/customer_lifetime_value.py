@@ -31,7 +31,7 @@ from app import app, server
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
-df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail.csv"),encoding="cp1252")
+df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail processed.csv"),encoding="cp1252")
 df=df.drop(['Description'], axis=1)
 df['CustomerID'] = df['CustomerID'].astype(int)
 df['CustomerID'] = df['CustomerID'].astype(str) 
@@ -42,8 +42,8 @@ df['CustomerID'] = df['CustomerID'].astype(str)
 number_of_customers_card = [
     dbc.CardBody(
         [
-            html.H1(df.shape[0], className="card-title"),
-            html.P("Total Customers",
+            html.H1(round(df.shape[0]/1000000,2), className="card-title"),
+            html.P("Total Customers (M)",
                 className="card-text",
             ),
         ],
@@ -56,7 +56,7 @@ number_of_countries_card = [
         [
             html.H1(df['Country'].nunique(), className="card-title"),
             html.P(
-                "Customers Countries",
+                "Total Countries",
                 className="card-text",
             ),
         ],
@@ -322,6 +322,7 @@ def revenue_distribution_per_country(countries):
     country_df=df[df['Country'].isin(countries)]
     revenue_per_country_df=country_df.groupby( ["Country"], as_index=False )["TotalSales"].sum().sort_values(by="TotalSales",ascending=False)
     revenue_per_country_df.columns=['Country','Revenue']
+    revenue_per_country_df['Revenue']=round(revenue_per_country_df['Revenue'],2)
     revenue_per_country_df=revenue_per_country_df[revenue_per_country_df['Country']!='United Kingdom']
     fig=px.bar(revenue_per_country_df.head(10),x='Country',y='Revenue',text='Revenue',color='Country',title='Countries by Revenue')
     fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.80),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
@@ -335,6 +336,7 @@ def revenue_distribution_per_country(countries):
 def current_monthly_revenue(countries):
     revenue_per_month_df=df.groupby('Month', as_index=False )['TotalSales'].sum().sort_values(by="Month",ascending=True)
     revenue_per_month_df.columns=['Month','Revenue']
+    revenue_per_month_df['Revenue']=round(revenue_per_month_df['Revenue'],2)
     fig=px.bar(revenue_per_month_df,x='Month',y='Revenue',color='Revenue',text='Revenue',  title='Current Monthly Revenue Distribution')
     fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.80),autosize=True,margin=dict(t=30,b=0,l=0,r=0)) 
     return fig
@@ -347,6 +349,7 @@ def current_monthly_revenue(countries):
 def current_customer_revenue(countries):
     revenue_per_customers_df=df.groupby('CustomerID', as_index=False )['TotalSales'].sum().sort_values(by="TotalSales",ascending=False)
     revenue_per_customers_df.columns=['Customers','Revenue']
+    revenue_per_customers_df['Revenue']=round(revenue_per_customers_df['Revenue'],2)
     revenue_per_customers_df=revenue_per_customers_df[revenue_per_customers_df['Customers']!='nan']
     fig=px.bar(revenue_per_customers_df.head(10),x='Customers',y='Revenue',color='Customers',text='Revenue',
     title='Customer Revenue')
@@ -377,6 +380,7 @@ def revenue_trend(countries):
 def daily_revenue(countries):
     revenue_per_day_df=df.groupby('Day', as_index=False )['TotalSales'].sum().sort_values(by="Day",ascending=True)
     revenue_per_day_df.columns=['Day','Revenue']
+    revenue_per_day_df['Revenue']=round(revenue_per_day_df['Revenue'],2)
     fig=px.bar(revenue_per_day_df,x='Day',y='Revenue',color='Revenue',text='Revenue',title='Revenue Dist')
     fig.update_layout(legend=dict(yanchor="top",y=0.95,xanchor="left",x=0.80),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
     return fig
@@ -402,6 +406,7 @@ def customer_lifetime_value(clv_months):
     lifetimes_txn_data['predicted_num_of_txns'] = round(bgf_model.conditional_expected_number_of_purchases_up_to_time(t, lifetimes_txn_data['frequency'], lifetimes_txn_data['recency'], lifetimes_txn_data['T']),2)
     lifetimes_txn_data=lifetimes_txn_data.sort_values(by='predicted_num_of_txns', ascending=False)
     lifetimes_txn_data.head(t)
+    lifetimes_txn_data['monetary_value']=round(lifetimes_txn_data['monetary_value'],2)
     # Get customers with frequency >0
     lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['frequency']>0]
     ggf_model = GammaGammaFitter(penalizer_coef = 0)
