@@ -12,7 +12,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 px.defaults.template = "ggplot2"
+plt.style.use('ggplot')
 import pathlib
 # End Dash dependencies import
 
@@ -23,6 +25,8 @@ from lifetimes.plotting import plot_frequency_recency_matrix
 from lifetimes.plotting import plot_probability_alive_matrix
 from lifetimes.plotting import plot_period_transactions
 from lifetimes.plotting import plot_history_alive
+from io import BytesIO
+import base64
 # End Lifetimes libraries
 
 
@@ -35,6 +39,7 @@ df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail process
 df=df.drop(['Description'], axis=1)
 df['CustomerID'] = df['CustomerID'].astype(int)
 df['CustomerID'] = df['CustomerID'].astype(str) 
+df['Date']=df['Date'].astype('datetime64[ns]')
 
 
 
@@ -124,6 +129,13 @@ layout=dbc.Container([
       dbc.Input(id="number-of-clv-months-input", placeholder="Enter No of Months for CLV...", type="Number", value=12, min=1, max=48,
         style={'margin-left':'3px','margin-right':'5px','margin-top':'3px'}),
             html.Br(),
+      dbc.Input(id="probability-alive-input", placeholder="Enter No. days ...", type="Number", value=365, min=1, max=1825,
+        style={'margin-left':'3px','margin-right':'5px','margin-top':'3px'}),
+            html.Br(),
+      dcc.Dropdown(id='customer-input',multi=False, value='14096',
+      options=[{'label':x,'value':x} for x in sorted(df['CustomerID'].unique())],
+      style={'margin-bottom': '7px','margin-left':'3px','margin-right':'5px'}),
+            html.Br(),
       dcc.Dropdown(id='country-input',multi=True, value=df['Country'].unique()[1:11],
       options=[{'label':x,'value':x} for x in sorted(df['Country'].unique())],
       style={'margin-bottom': '7px','margin-left':'3px','margin-right':'5px'}),
@@ -182,6 +194,54 @@ html.Hr(),
                           md=6),
             ]
         ),     
+
+
+      dbc.Row(
+            [ 
+                dbc.Col(
+               html.Img(src=app.get_asset_url('customer_lifetime_value/frequency_recency_matrix.png'), style={'height':'100%', 'width':'100%'}),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+                 dbc.Col(
+                  html.Img(src=app.get_asset_url('customer_lifetime_value/probability_alive_matrix.png'), style={'height':'100%', 'width':'100%'}),
+                    style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
+            ]
+        ),   
+
+
+
+  # # row 3 start
+  # dbc.Row([   
+  #   dbc.Col([
+  #     html.Img(id="frequency-recency-matrix-src"),
+  #     ], md=6),
+  #   dbc.Col([
+  #     html.Img(id="probability-alive-matrix-src"),
+  #     ], md=6),
+
+  #   ], no_gutters=True,
+  #   style={'margin-bottom': '2px'}
+  #   ),
+  # # row 3 end
+
+    # row 3 start
+  dbc.Row([   
+    dbc.Col([
+      html.Img(id="probability-alive-src", style={'height':'100%', 'width':'100%'}),
+      ], md=8),
+    dbc.Col([
+      html.Img(id="model-evaluation-src", style={'height':'100%', 'width':'100%'}),
+      ], md=4),
+
+    ], no_gutters=True,
+    style={'margin-bottom': '2px'}
+    ),
+  # row 3 end
 
 
 #1.
@@ -448,5 +508,99 @@ def customer_lifetime_value(clv_months):
                     page_size= 10,
 
                     ),round(lifetimes_txn_data['Customer Lifetime Value (CLV)'].sum()/1000000,2), fig
+
+
+# @app.callback(
+#   Output('frequency-recency-matrix-src', 'src'), 
+#   Input('frequency-recency-matrix-src', 'id'),
+#   Input('number-of-clv-months-input','value'))
+# def compute_frequency_recency_matrix(b,clv_months):
+#     t=12
+#     if t=='':
+#       t=12
+#     else:
+#       t=int(clv_months)
+#     last_order_date=df['Date'].max()
+#     lifetimes_txn_data = summary_data_from_transaction_data(df, 'CustomerID', 'Date', monetary_value_col='TotalSales', observation_period_end=last_order_date).reset_index()
+#     lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['CustomerID']!='nan']
+#     bgf_model_rfm=BetaGeoFitter(penalizer_coef=0.0)
+#     bgf_model_rfm.fit(lifetimes_txn_data['frequency'],lifetimes_txn_data['recency'],lifetimes_txn_data['T'])  
+#     fig_recency_frequency_matrix = plt.figure(figsize=(12,6))
+#     fig_recency_frequency_matrix=plot_frequency_recency_matrix(bgf_model_rfm)
+#     img_recency_frequency_matrix = BytesIO()
+#     fig_recency_frequency_matrix.figure.savefig(img_recency_frequency_matrix, format='PNG')
+#     # plt.close()
+#     img_recency_frequency_matrix.seek(0)
+#     return 'data:image/png;base64,{}'.format(base64.b64encode(img_recency_frequency_matrix.getvalue()).decode())
+
+# @app.callback(
+#   Output('probability-alive-matrix-src', 'src'), 
+#   Input('probability-alive-matrix-src', 'id'),
+#   Input('number-of-clv-months-input','value'))
+# def compute_probability_alive_matrix(b,clv_months):
+#     t=12
+#     if t=='':
+#       t=12
+#     else:
+#       t=int(clv_months)
+#     last_order_date=df['Date'].max()
+#     lifetimes_txn_data = summary_data_from_transaction_data(df, 'CustomerID', 'Date', monetary_value_col='TotalSales', observation_period_end=last_order_date).reset_index()
+#     lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['CustomerID']!='nan']
+#     bgf_model=BetaGeoFitter(penalizer_coef=0.0)
+#     bgf_model.fit(lifetimes_txn_data['frequency'],lifetimes_txn_data['recency'],lifetimes_txn_data['T'])  
+#     fig_probability_alive_matrix = plt.figure(figsize=(12,6))
+#     fig_probability_alive_matrix=plot_probability_alive_matrix(bgf_model)
+#     img_probability_alive_matrix = BytesIO()
+#     fig_probability_alive_matrix.figure.savefig(img_probability_alive_matrix, format='PNG')
+#     # plt.close()
+#     img_probability_alive_matrix.seek(0)
+#     return 'data:image/png;base64,{}'.format(base64.b64encode(img_probability_alive_matrix.getvalue()).decode())
+
+
+@app.callback(
+  Output('probability-alive-src', 'src'), 
+  Input('probability-alive-src', 'id'),
+  Input('probability-alive-input','value'),
+  Input('customer-input','value'))
+def compute_probability_alive(b,p_alive_input,customer_id_input):
+    duration = int(p_alive_input)
+    customer_id=str(customer_id_input)
+    t=12
+    last_order_date=df['Date'].max()
+    lifetimes_txn_data = summary_data_from_transaction_data(df, 'CustomerID', 'Date', monetary_value_col='TotalSales', observation_period_end=last_order_date).reset_index()
+    lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['CustomerID']!='nan']
+    bgf_model=BetaGeoFitter(penalizer_coef=0.0)
+    bgf_model.fit(lifetimes_txn_data['frequency'],lifetimes_txn_data['recency'],lifetimes_txn_data['T'])  
+    customer = df[df['CustomerID'] == customer_id] 
+    fig_probability_alive = plt.figure(figsize=(12,6))
+    fig_probability_alive=plot_history_alive(bgf_model, duration, customer, 'Date')
+    img_probability_alive = BytesIO()
+    fig_probability_alive.figure.savefig(img_probability_alive, format='PNG')
+    # plt.close()
+    img_probability_alive.seek(0)
+    return 'data:image/png;base64,{}'.format(base64.b64encode(img_probability_alive.getvalue()).decode())
+
+
+@app.callback(
+  Output('model-evaluation-src', 'src'), 
+  Input('model-evaluation-src', 'id'),
+  Input('number-of-clv-months-input','value'))
+def compute_model_evaluation(b,clv_months):
+    customer_id='14096'
+    duration = 730
+    t=12
+    last_order_date=df['Date'].max()
+    lifetimes_txn_data = summary_data_from_transaction_data(df, 'CustomerID', 'Date', monetary_value_col='TotalSales', observation_period_end=last_order_date).reset_index()
+    lifetimes_txn_data=lifetimes_txn_data[lifetimes_txn_data['CustomerID']!='nan']
+    bgf_model=BetaGeoFitter(penalizer_coef=0.0)
+    bgf_model.fit(lifetimes_txn_data['frequency'],lifetimes_txn_data['recency'],lifetimes_txn_data['T'])  
+    fig_model_evaluation = plt.figure(figsize=(12,6))
+    fig_model_evaluation=plot_period_transactions(bgf_model)
+    img_model_evaluation = BytesIO()
+    fig_model_evaluation.figure.savefig(img_model_evaluation, format='PNG')
+    # plt.close()
+    img_model_evaluation.seek(0)
+    return 'data:image/png;base64,{}'.format(base64.b64encode(img_model_evaluation.getvalue()).decode())
+
 
 
