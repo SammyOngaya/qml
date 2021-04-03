@@ -35,7 +35,7 @@ from app import app, server
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
-df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail processed.csv"),encoding="cp1252")
+df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail Processed.csv"),encoding="cp1252")
 df=df.drop(['Description'], axis=1)
 df['CustomerID'] = df['CustomerID'].astype(int)
 df['CustomerID'] = df['CustomerID'].astype(str) 
@@ -563,8 +563,19 @@ def customer_lifetime_value(clv_months):
   Input('probability-alive-input','value'),
   Input('customer-input','value'))
 def compute_probability_alive(b,p_alive_input,customer_id_input):
-    duration = int(p_alive_input)
-    customer_id=str(customer_id_input)
+    
+    duration = 365
+    if duration == '':
+      duration=365
+    else:
+      duration=int(p_alive_input) 
+
+    customer_id='14096'
+    if customer_id == '':
+      customer_id='14096'
+    else:
+      customer_id=str(customer_id_input)
+
     t=12
     last_order_date=df['Date'].max()
     lifetimes_txn_data = summary_data_from_transaction_data(df, 'CustomerID', 'Date', monetary_value_col='TotalSales', observation_period_end=last_order_date).reset_index()
