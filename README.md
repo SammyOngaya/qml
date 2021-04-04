@@ -39,4 +39,5 @@ Lifetimes is used to analyze your users based on a few assumption:<br>
 <br><br>
 Datasets<br>
 We will use the online retail  transnational data set which contains all the transactions occurring between 01/12/2010 and 09/12/2011 for a UK-based and registered non-store online retail.The company mainly sells unique all-occasion gifts. Many customers of the company are wholesalers <a href="http://archive.ics.uci.edu/ml/datasets/online+retail">more on dataset</a>.
+The use-case is hosted here <a href="https://qaml.herokuapp.com/apps/customer_lifetime_value" target="blank"> Customer Lifetime Value</a>
 
