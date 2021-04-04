@@ -20,4 +20,23 @@ The project is hosted here <a href="https://qaml.herokuapp.com/apps/telco_custom
 2. ![Telco Customer Churn Modeling](https://raw.githubusercontent.com/SammyOngaya/Customer-Churn-Prediction/master/Notebooks/Churn%20Models/Telco%20Customer%20Churn%20ML%20Modeling.PNG)
 
 
-3. ![Telco Customer Churn Model Prediction and Results Presentation](https://github.com/SammyOngaya/Customer-Churn-Prediction/blob/master/Notebooks/Churn%20Models/Telco%20Customer%20Churn%20Model%20Prediction.PNG?raw=true)
+### <a href="https://qaml.herokuapp.com/apps/customer_lifetime_value" target="blank">2. Customer Lifetime Value</a>
+
+Customer lifetime value is the total worth to a business of a customer over the whole period of their relationship. It’s an important metric as it costs less to keep existing customers than it does to acquire new ones, so increasing the value of your existing customers is a great way to drive growth. Knowing the CLV helps businesses develop strategies to acquire new customers and retain existing ones while maintaining profit margins. <br><br>
+CLV=Expected No. of Transaction * Revenue per Transaction * Margin <br>
+Where;<br>
+Expected No. of Transaction is calculated using BG/NBD Model<br>
+Revenue per Transaction is calculated using Gama Gama Model and<br> 
+Margin is provided by historical transaction or we can take a standard value of 5%.<br><br>
+Model<br>
+For this use-case we will use the lifetimes library. 
+Lifetimes is used to analyze your users based on a few assumption:<br>
+
+1. Users interact with you when they are "alive".<br>
+2. Users under study may "die" after some period of time.
+
+<a href="https://lifetimes.readthedocs.io/en/master/index.html"> more on library</a>
+<br><br>
+Datasets<br>
+We will use the online retail  transnational data set which contains all the transactions occurring between 01/12/2010 and 09/12/2011 for a UK-based and registered non-store online retail.The company mainly sells unique all-occasion gifts. Many customers of the company are wholesalers <a href="http://archive.ics.uci.edu/ml/datasets/online+retail">more on dataset</a>.
+
