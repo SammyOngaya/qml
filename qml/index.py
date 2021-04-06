@@ -5,7 +5,7 @@ import dash_core_components as dcc
 from dash.dependencies import Input, Output,State
 from app import app, server
 
-from apps import home,explore,telco_customer_churn,customer_lifetime_value
+from apps import home,explore,telco_customer_churn,telco_customer_survival_analysis,customer_lifetime_value
 
 app.layout = html.Div([
   dcc.Location(id='url', refresh=False),
@@ -22,8 +22,8 @@ def display_page(pathname):
         return telco_customer_churn.layout
     elif pathname == '/apps/customer_lifetime_value':
         return customer_lifetime_value.layout
-    # elif pathname == '/apps/tweet_analysis':
-    #     return tweet_analysis.layout
+    elif pathname == '/apps/telco_customer_survival_analysis':
+        return telco_customer_survival_analysis.layout
     # elif pathname == '/apps/topic_modeling':
     #     return topic_modeling.layout
     else:
