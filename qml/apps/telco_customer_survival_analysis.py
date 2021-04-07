@@ -281,7 +281,7 @@ html.Hr(),
                           ] 
                           ),
                           style={
-                                'margin-top': '30px'
+                                # 'margin-top': '30px'
                                 },
                           md=12),
                           ]
