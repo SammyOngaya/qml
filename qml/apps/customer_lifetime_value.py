@@ -35,7 +35,7 @@ from app import app, server
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
-df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail Processed.csv"),encoding="cp1252")
+df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail.csv"),encoding="cp1252")
 df=df.drop(['Description'], axis=1)
 df['CustomerID'] = df['CustomerID'].astype(int)
 df['CustomerID'] = df['CustomerID'].astype(str) 

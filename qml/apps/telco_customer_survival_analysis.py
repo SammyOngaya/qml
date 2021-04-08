@@ -265,7 +265,7 @@ layout=dbc.Container([
    html.Div(
     [
 
-html.Hr(),
+# html.Hr(),
 # row 2 start
 
    #1.
@@ -304,16 +304,8 @@ html.Hr(),
 
                    html.Div(kmf_overral_data_table(kmf_df)),
                               style={
-                                # 'margin-top': '30px'
+                                'margin-top': '80px'
                                 },
-                   # dcc.Graph(
-                   #          id='kaplan-meier-overall-log-logs',
-                   #          # figure=compute_kmf_log_plot(kmf),
-                   #          config={'displayModeBar': False },
-                   #          ),
-                   #  style={
-                   #              'margin-top': '30px'
-                   #              },
                           md=4),
             ]
         ),   
