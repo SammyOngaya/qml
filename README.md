@@ -43,3 +43,33 @@ The use-case is hosted here <a href="https://qaml.herokuapp.com/apps/customer_li
 ![Customer Lifetime Value](https://raw.githubusercontent.com/SammyOngaya/qml/main/qml/assets/customer_lifetime_value/customer-lifetime-value.PNG)
 
 
+### <a href="https://qaml.herokuapp.com/apps/telco_customer_survival_analysis" target="blank">2. Telco Customer Survival Analysis and Prediction</a>
+
+In this use-case we develope a survival analysis model using Kaplan Meier and Cox Proportional Harzad regresion model to estimate the survivorship of the telco customer before they churn. Survival analysis is a time-to-event analysis using the survival function.
+
+Sample use-cases
+; 1. Time until the customer churn.
+2. Time until product failure.
+3. Time until a warranty claim.
+4. Time until a process reaches a critical level.
+5. Time from initial sales contact to a sale.
+6. Time from employee hire to either termination or quit.
+7. Time from a salesperson hire to their first sale.
+8. et..c..
+
+In this use-case we use the Kaplan Meier curve to estimate the survival function of the telco customers by entire distribution and by cohorts (Contract and Dependents). The Kaplan Meier function visually presents the probability of an event at a respective time interval. In our case we study the probability of survival at each tenure until the event (which is customer churn) occures. To extend the intepretation of the study we compute the p-value to evaluate the statistical significance of the cohorts.
+
+For the prediction of the rate of survival of an individual member of the population (customer in our case of telco churn) we use the Cox Proportiona Harzards (CPH) Regression.
+CPH has an advantage over Kaplan Meier model since;
+1. It can accept any number of features and not the entire data or cohort.
+2. Also CPH allows us to perform the predictor ranking which enables in identifying the outstanding features that nfluences the survivorship of the individual.
+3. We can use the CPH results to perform the probability of survival of unknown individual given the the data features.
+
+Data
+We use the telco customer churn dataset for our use-case.
+
+Implementation
+We use lifelines python package to implement this use-case and develope a Dash application to deploy and interact with the solution. The project is hostere here <a href="https://qaml.herokuapp.com/apps/telco_customer_survival_analysis" target="blank">2. Telco Customer Survival Analysis and Prediction</a>
+
+![Customer Lifetime Value](https://raw.githubusercontent.com/SammyOngaya/qml/main/qml/assets/customer_lifetime_value/customer-lifetime-value.PNG)
+
