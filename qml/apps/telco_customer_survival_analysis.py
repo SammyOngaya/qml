@@ -15,6 +15,7 @@ plt.style.use('ggplot')
 import pathlib
 # End Dash dependencies import
 
+from sklearn.model_selection import train_test_split
 # Lifelimes libraries
 from lifelines import KaplanMeierFitter,CoxPHFitter, WeibullAFTFitter
 from io import BytesIO
@@ -183,8 +184,8 @@ def process_cph_data(df):
     df=pd.get_dummies(df, drop_first=True)
     df['tenure'] = df['tenure'].astype(int) 
     return df
-cph_df=process_cph_data(df)
-
+cph_procesed_df=process_cph_data(df)
+cph_df, cph_test = train_test_split(cph_procesed_df, test_size=0.2)
 # Fit cph model
 cph = CoxPHFitter()
 def train_cph(cph_df):
@@ -226,11 +227,11 @@ wft.fit(cph_df, 'tenure', event_col='Churn')
 
 
 # Prediction
-def process_prediction_data(cph_df,pred_customers):  
-    cph_df=cph_df[cph_df.index.isin(pred_customers)]
+def process_prediction_data(cph_test,pred_customers):  
+    cph_test=cph_test[cph_test.index.isin(pred_customers)]
     # cph_df=cph_df.head()
-    cph_df = cph_df.iloc[0:, 2:]
-    predict_df=pd.DataFrame(cph_model.predict_survival_function(cph_df)).reset_index()
+    cph_test = cph_test.iloc[0:, 2:]
+    predict_df=pd.DataFrame(cph_model.predict_survival_function(cph_test)).reset_index()
     unpivoted_prediction_df=predict_df.melt(id_vars=['index'], var_name='Customers', value_name='Prediction').sort_values(by=['index'],ascending=True)
     unpivoted_prediction_df.columns=['Tenure','Customers','Prediction']
     unpivoted_prediction_df['Prediction']=round(unpivoted_prediction_df['Prediction'],2)
@@ -238,7 +239,7 @@ def process_prediction_data(cph_df,pred_customers):
     return unpivoted_prediction_df
 
 
-# prediction_df=process_prediction_data(cph_df)
+# cph_test_df=process_prediction_data(cph_test,pred_customers)
 
 
 
@@ -337,8 +338,6 @@ layout=dbc.Container([
                                               # 'margin-top': '30px'
                                               },md=6),
 
-
-
     ], no_gutters=True,
     style={'margin-bottom': '2px'}
     ),
@@ -350,10 +349,9 @@ layout=dbc.Container([
             [ 
                 dbc.Col(
                   html.Div([    
-                  dcc.Dropdown(id='cph-customer-input',multi=True, value=df['customerID'].unique()[1:5],
-                    options=[{'label':x,'value':x} for x in sorted(df['customerID'].unique())],
+                  dcc.Dropdown(id='cph-customer-input',multi=True, value=cph_test.index.unique()[1:5],
+                    options=[{'label':x,'value':x} for x in sorted(cph_test.index.unique())],
                     style={'margin-bottom': '7px','margin-left':'3px','margin-right':'5px'}),
-
                     dcc.Graph(
                             id='cph-prediction-graph-output',
                             figure={},
@@ -365,7 +363,6 @@ layout=dbc.Container([
                                 'margin-top': '30px'
                                 },
                           md=12),
-
             ]
         ),  
 
@@ -440,7 +437,7 @@ def compute_wft_plot(b):
    Input('cph-customer-input','value'),
   )
 def cph_model_per_customer(pred_customers):
-    prediction_df=process_prediction_data(cph_df,pred_customers)
+    prediction_df=process_prediction_data(cph_test,pred_customers)
     fig = px.line(prediction_df, x='Tenure', y='Prediction', color='Customers',line_shape='vh')
     fig.update_layout(title={'text': 'Cox Proportional Harzard Prediction','y':0.9,'x':0.5, 'xanchor': 'center','yanchor': 'top'},
                               legend=dict(yanchor="bottom",y=0.05,xanchor="right",x=0.20),autosize=True,margin=dict(t=70,b=0,l=0,r=0))
