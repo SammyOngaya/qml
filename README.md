@@ -71,5 +71,5 @@ We use the telco customer churn dataset for our use-case.
 Implementation
 We use lifelines python package to implement this use-case and develope a Dash application to deploy and interact with the solution. The project is hostere here <a href="https://qaml.herokuapp.com/apps/telco_customer_survival_analysis" target="blank">2. Telco Customer Survival Analysis and Prediction</a>
 
-![Customer Lifetime Value](https://raw.githubusercontent.com/SammyOngaya/qml/main/qml/assets/customer_lifetime_value/customer-lifetime-value.PNG)
+![Customer Lifetime Value](https://raw.githubusercontent.com/SammyOngaya/qml/main/qml/assets/survival_analysis/survival_analysis.PNG)
 
