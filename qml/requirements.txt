@@ -29,3 +29,4 @@ dash-uploader==0.4.2
 imbalanced-learn==0.6.2
 Lifetimes==0.11.3
 matplotlib==3.3.3
+lifelines==0.25.8
