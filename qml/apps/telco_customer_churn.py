@@ -275,6 +275,7 @@ layout=dbc.Container([
         dbc.NavItem(dbc.NavLink("Telco Customer Churn", active=True,href="/apps/telco_customer_churn")),
         dbc.NavItem(dbc.NavLink("Telco Customer Survival Analysis", active=False,href="/apps/telco_customer_survival_analysis")),
         dbc.NavItem(dbc.NavLink("Customer Lifetime Value", active=False,href="/apps/customer_lifetime_value")),
+        dbc.NavItem(dbc.NavLink("Customer Segmentation", active=False,href="/apps/customer_segmentation")),
         # dbc.NavItem(dbc.NavLink("Explore", active=True,href="/apps/explore")),
         # dbc.NavItem(dbc.NavLink("Clean", active=True,href="#")),
         # dbc.NavItem(dbc.NavLink("Analyse", active=True,href="#")),
