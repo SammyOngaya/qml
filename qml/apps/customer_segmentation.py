@@ -10,13 +10,19 @@ import plotly.figure_factory as ff
 from dash.dependencies import Input, Output,State
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 px.defaults.template = "ggplot2"
+plt.style.use('ggplot')
 # End Dash dependencies import
 
-# Data preprocessing 
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+
 
 
 import os
@@ -28,8 +34,18 @@ from app import app, server
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
-df=pd.read_csv(DATA_PATH.joinpath("telco-customer-churn.csv"))
+df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail.csv"),encoding="cp1252")
 
+def clean_data(df):
+	df = df[pd.notnull(df['CustomerID'])]
+	df=df[df['Quantity']>0]
+	df['CustomerID'] = df['CustomerID'].astype(int)
+	df['CustomerID'] = df['CustomerID'].astype(str) 
+	df['Date'] = pd.to_datetime(df['InvoiceDate'], format="%d/%m/%Y %H:%M").dt.date
+	df['TotalSales']=df['Quantity']*df['UnitPrice']
+	df['TotalSales']=round(df['TotalSales'],2)
+	return df
+df=clean_data(df)
 
 
 layout=dbc.Container([
