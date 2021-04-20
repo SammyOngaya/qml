@@ -64,6 +64,131 @@ def renevue_dist_by_country(df):
     fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
     return fig
 
+def customer_country(df):
+    customer_country_count_df=df[['Country','CustomerID']].drop_duplicates()
+    customer_country_count_df=customer_country_count_df.groupby( ["Country"], as_index=False )["CustomerID"].count()
+    customer_country_revenue_df=df.groupby( ["Country"], as_index=False )["TotalSales"].sum()
+    customer_country_revenue_df.columns=['Country','TotalSales']
+    customer_country_revenue_df=round(customer_country_revenue_df,2)
+    customer_country_df=pd.concat([customer_country_count_df,customer_country_revenue_df],axis=1)
+    # Merge two dataframes
+    customer_country_df=pd.merge(customer_country_count_df,customer_country_revenue_df, on="Country")
+    # Get Country Code from a nother dataset gapminder
+    country_iso_df = px.data.gapminder()
+    country_iso_df=country_iso_df[['country','iso_alpha']]
+    country_iso_df=country_iso_df.drop_duplicates(subset=['country'])
+    country_iso_df.columns=['Country','Country Code']
+    #Merge the two datasets
+    customer_country_df=pd.merge(customer_country_df,country_iso_df, on="Country")
+    customer_country_df['CustomerID'] = customer_country_df['CustomerID'].astype(str) 
+    return customer_country_df
+
+customer_country_df=customer_country(df)
+
+def customer_geosegmentation(customer_country_df):
+    customer_country_df=customer_country_df[customer_country_df['Country']!='United Kingdom'] # remove UK since it's a dominant country in the dataset
+    fig = go.Figure(data=go.Choropleth(
+        locations = customer_country_df['Country Code'],
+        z = customer_country_df['TotalSales'],
+        text = "Customers : "+customer_country_df['CustomerID']+"<br>Country : "+customer_country_df['Country'],
+        colorscale = 'Blues',
+        autocolorscale=True,
+        reversescale=True,
+        marker_line_color='darkgray',
+        marker_line_width=0.01,
+        colorbar_tickprefix = '$',
+        colorbar_title = 'Total<br>Revenue US$',
+
+    ))
+
+    fig.update_layout(
+        title_text='Geographical Segmentation of Customers with Revenue & No. of Customers',
+        geo = dict(
+            showlakes=True, 
+            lakecolor='skyblue',
+            showframe=False,
+            showcoastlines=False,
+            projection_type='equirectangular'
+        ),
+        legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0)
+    )
+    return fig
+
+## RFM
+
+def recency_score (quantiles):
+    if quantiles <= 17:
+        return 1
+    elif quantiles <= 50:
+        return 2
+    elif quantiles <= 141.5:
+        return 3
+    else:
+        return 4
+
+def frequency_score (quantiles):
+    if quantiles <= 17:
+        return 1
+    elif quantiles <= 41:
+        return 2
+    elif quantiles <= 100:
+        return 3
+    else:
+        return 4
+
+def monetary_score (quantiles):
+    if quantiles <= 307.245:
+        return 1
+    elif quantiles <= 674.450:
+        return 2
+    elif quantiles <= 1661.640:
+        return 3
+    else:
+        return 4
+
+def prepare_rfm_data(df):
+	last_order_date=df['Date'].max()
+	rfm = df.groupby('CustomerID').agg({'Date': lambda x: (last_order_date - x.max()).days, 'InvoiceNo': lambda x: len(x), 'TotalSales': lambda x: x.sum()}).reset_index()
+	rfm.rename(columns={'Date': 'Recency','InvoiceNo': 'Frequency','TotalSales': 'Monetary'}, inplace=True)
+	quantiles = rfm.quantile(q=[0.25,0.5,0.75])
+	rfm['R'] = rfm['Recency'].apply(recency_score )
+	rfm['F'] = rfm['Frequency'].apply(frequency_score)
+	rfm['M'] = rfm['Monetary'].apply(monetary_score)
+	rfm['rfm_group'] = rfm.R.map(str) + rfm.F.map(str) + rfm.M.map(str)
+	rfm['rfm_score'] = rfm[['R', 'F', 'M']].sum(axis=1)
+	rfm['rfm_catrgory'] = pd.qcut(rfm.rfm_score, q = 4, labels = ['Platinum', 'Gold', 'Silver', 'Bronze']).values
+	return rfm
+
+rfm=prepare_rfm_data(df)
+
+def rfm_customer_segments(rfm):
+    rfm_category_df=rfm.groupby(["rfm_catrgory"], as_index=False )["CustomerID"].count()
+    rfm_category_df=rfm_category_df.sort_values(by=['CustomerID'],ascending=False)
+    rfm_category_df.columns=['Clusters','No. Customers']
+    colors=['gold','orange','grey','brown']
+    fig=px.bar(rfm_category_df,x='Clusters',y='No. Customers',text='No. Customers',color='Clusters',
+               color_discrete_sequence=colors,title='RFM Customer Segments')
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
+
+
+def plot_rfm_clusters(rfm):
+    colors=['grey','gold','orange','brown']
+    fig = px.scatter(rfm, x="Recency", y="Frequency", color="rfm_catrgory",color_discrete_sequence=colors,
+                     hover_data=['rfm_catrgory'], log_y=True,title="Customer Clusters Using RFM Method")
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
+
+
+def plot_3d_rfm_clusters(rfm):
+    colors=['grey','gold','orange','brown']
+    fig = px.scatter_3d(rfm, x="Recency", y="Frequency", z='rfm_catrgory',color_discrete_sequence=colors,
+                        color='rfm_catrgory', log_y=True, title="RFM Customer Clusters")
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
+    
+
+
 
 
 layout=dbc.Container([
@@ -163,7 +288,7 @@ dbc.Tab(
             [ 
                 dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='churn-distribution',
+                            id='cust-dist-by-country',
                             figure=cust_dist_by_country(df),
                             config={'displayModeBar': False },
                             ),
@@ -176,7 +301,7 @@ dbc.Tab(
            #2.
                   dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='churn_by_gender',
+                            id='renevue-dist-by-country',
                             figure=renevue_dist_by_country(df),  
                             config={'displayModeBar': False } 
                             ),
@@ -189,13 +314,30 @@ dbc.Tab(
             ]
         ),
 
+        dbc.Row(
+            [ 
+                  dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='customer-geodist',
+                            figure=customer_geosegmentation(customer_country_df),  
+                            config={'displayModeBar': False } 
+                            ),
+                          ] 
+                          ),  
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=12),
+            ]
+        ),
+
 # 4. 
         dbc.Row(
             [ 
             dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='distribution-by-revenue',
-                            # figure=distribution_by_revenue(df),
+                            id='rfm-customer-segments',
+                            figure=rfm_customer_segments(rfm),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -203,12 +345,12 @@ dbc.Tab(
                           style={
                                 'margin-top': '30px'
                                 },
-                          md=4),
+                          md=6),
 
             dbc.Col(html.Div([                  
                     dcc.Graph(
                             id='churn-by-monthlycharges',
-                            # figure=churn_by_monthlycharges(df),
+                            figure=plot_rfm_clusters(rfm),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -216,9 +358,11 @@ dbc.Tab(
                           style={
                                 'margin-top': '30px'
                                 },
-                          md=8),
+                          md=6),
             ]
         ),
+
+   
 
 
 
@@ -226,39 +370,8 @@ dbc.Tab(
             [ 
             dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='churn-by-citizenship',
-                            # figure=churn_by_citizenship(df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=4),
-
-            dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='tenure-charges-correlation',
-                            # figure=tenure_charges_correlation(df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=8),
-            ]
-        ),
-
-
-         dbc.Row(
-            [ 
-            dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='churn-by-tenure',
-                            # figure=churn_by_tenure(df),
+                            id='plot-3d-rfm-clusters',
+                            figure=plot_3d_rfm_clusters(rfm),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -267,43 +380,10 @@ dbc.Tab(
                                 'margin-top': '30px'
                                 },
                           md=12),
-
             ]
         ),
 
-              dbc.Row(
-            [ 
-            dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='churn-by-techsupport',
-                            # figure=churn_by_techsupport(df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=5),
-            dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='churn-by-payment_method',
-                            # figure=churn_by_payment_method(df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=7),
-
-            ]
-        ),
-     
-     
-
-       
+ 
         # footer
  		dbc.Row(
             [
