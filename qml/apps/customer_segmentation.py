@@ -48,6 +48,24 @@ def clean_data(df):
 df=clean_data(df)
 
 
+def cust_dist_by_country(df):
+    df=df[['Country','CustomerID']].drop_duplicates()
+    customer_count_df=df.groupby( ["Country"], as_index=False )["CustomerID"].count().sort_values(by="CustomerID",ascending=False)
+    customer_count_df.columns=['Country','Customers']
+    fig=px.bar(customer_count_df.head(10),x='Country',y='Customers',text='Customers',color='Country', log_y=True,title='Customers Distribution per Top 10 Countries')
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
+
+def renevue_dist_by_country(df):
+    revenue_per_country_df=df.groupby( ["Country"], as_index=False )["TotalSales"].sum().sort_values(by="TotalSales",ascending=False)
+    revenue_per_country_df.columns=['Country','TotalSales']
+    revenue_per_country_df=round(revenue_per_country_df,2)
+    fig=px.bar(revenue_per_country_df.head(10),x='Country',y='TotalSales',text='TotalSales',color='Country', log_y=True,title='Revenue Distribution per Top 10 Countries')
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
+
+
+
 layout=dbc.Container([
 
    dbc.NavbarSimple(
@@ -146,7 +164,7 @@ dbc.Tab(
                 dbc.Col(html.Div([                  
                     dcc.Graph(
                             id='churn-distribution',
-                            # figure=churn_distribution(df),
+                            figure=cust_dist_by_country(df),
                             config={'displayModeBar': False },
                             ),
                           ] 
@@ -154,12 +172,12 @@ dbc.Tab(
                     			style={
                                 'margin-top': '30px'
                                 },
-                        	md=3),
+                        	md=6),
            #2.
                   dbc.Col(html.Div([                  
                     dcc.Graph(
                             id='churn_by_gender',
-                            # figure=churn_by_gender(df),  
+                            figure=renevue_dist_by_country(df),  
                             config={'displayModeBar': False } 
                             ),
                           ] 
@@ -167,21 +185,7 @@ dbc.Tab(
                           style={
                                 'margin-top': '30px'
                                 },
-                          md=3),
-   #3. 
-                 dbc.Col(html.Div([                  
-                    dcc.Graph(  
-                            id='churn-by-contract', 
-                            # figure=churn_by_contract(df),
-                            config={'displayModeBar': False }  
-                            ),
-                          ] 
-                          ),  
-                          style={
-                                'margin-top': '30px'  
-                                },
                           md=6),
-
             ]
         ),
 
