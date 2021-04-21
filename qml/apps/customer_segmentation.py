@@ -47,22 +47,6 @@ def clean_data(df):
 df=clean_data(df)
 
 
-def cust_dist_by_country(df):
-    df=df[['Country','CustomerID']].drop_duplicates()
-    customer_count_df=df.groupby( ["Country"], as_index=False )["CustomerID"].count().sort_values(by="CustomerID",ascending=False)
-    customer_count_df.columns=['Country','Customers']
-    fig=px.bar(customer_count_df.head(10),x='Country',y='Customers',text='Customers',color='Country', log_y=True,title='Customers Distribution per Top 10 Countries')
-    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
-    return fig
-
-def renevue_dist_by_country(df):
-    revenue_per_country_df=df.groupby( ["Country"], as_index=False )["TotalSales"].sum().sort_values(by="TotalSales",ascending=False)
-    revenue_per_country_df.columns=['Country','TotalSales']
-    revenue_per_country_df=round(revenue_per_country_df,2)
-    fig=px.bar(revenue_per_country_df.head(10),x='Country',y='TotalSales',text='TotalSales',color='Country', log_y=True,title='Revenue Distribution per Top 10 Countries')
-    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
-    return fig
-
 def customer_country(df):
     customer_country_count_df=df[['Country','CustomerID']].drop_duplicates()
     customer_country_count_df=customer_country_count_df.groupby( ["Country"], as_index=False )["CustomerID"].count()
@@ -247,58 +231,16 @@ dbc.Tab(
         dbc.Row(
             [
 
-            dbc.Col(dbc.Card(dbc.CardBody( [
-            # html.H1(df.shape[0], className="card-title"),
-            html.P(
-                "Total Customers",
-                className="card-text",
-            ),
-           ],
-        style={'text-align': 'center'}
-          ), color="primary", inverse=True), style={'margin-top': '30px'}, md=2),
+            dbc.Col(
+            html.H5("Select Country"),
+            style={'margin-top': '15px'}, md=2),
 
-            dbc.Col(dbc.Card(dbc.CardBody( [
-            # html.H1(df[df['Churn']=='Yes']['customerID'].count(), className="card-title"),
-            html.P(
-                "Churned Cust",
-                className="card-text",
-            ),
-           ],
-        style={'text-align': 'center'}
-          ), color="primary", inverse=True), style={'margin-top': '30px'}, md=2),
+            dbc.Col(
+				      dcc.Dropdown(id='country-input',multi=True, value=df['Country'].unique()[1:11],
+				      options=[{'label':x,'value':x} for x in sorted(df['Country'].unique())],
+				      style={'margin-top': '15px'}),
 
-          dbc.Col(dbc.Card(dbc.CardBody( [
-            # html.H1(df[df['Churn']=='No']['customerID'].count(), className="card-title"),
-            html.P(
-                "Remained Cust",
-                className="card-text",
-            ),
-           ],
-        style={'text-align': 'center'}
-          ), color="primary", inverse=True), style={'margin-top': '30px'}, md=2),
-
-          dbc.Col(dbc.Card(dbc.CardBody( [
-            # html.H1(round(df[df['Churn']=='Yes']['TotalCharges'].sum()/1000,2), className="card-title"),
-            html.P(
-                "Churned Customer Rev. (K)",
-                className="card-text",
-            ),
-           ],
-        style={'text-align': 'center'}
-          ), color="primary", inverse=True), style={'margin-top': '30px'}, md=3),
-
-           dbc.Col(dbc.Card(dbc.CardBody( [
-            # html.H1(round(df[df['Churn']=='No']['TotalCharges'].sum()/1000,2), className="card-title"),
-            html.P(
-                "Remained Customer Rev. (K)",
-                className="card-text",
-            ),
-           ],
-        style={'text-align': 'center'}
-          ), color="primary", inverse=True), style={'margin-top': '30px'}, md=3),
-
-
-
+            	 md=10),
             ]
         ),
 
@@ -306,12 +248,12 @@ dbc.Tab(
     #1.
         dbc.Row(
             [ 
-                dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='cust-dist-by-country',
-                            figure=cust_dist_by_country(df),
+                dbc.Col(html.Div([ 
+                 dcc.Graph(
+                            id='customer-segmentation-per-country',
+                            figure={},
                             config={'displayModeBar': False },
-                            ),
+                            ),               
                           ] 
                         	),
                     			style={
@@ -321,8 +263,8 @@ dbc.Tab(
            #2.
                   dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='renevue-dist-by-country',
-                            figure=renevue_dist_by_country(df),  
+                            id='customer-revenue-segmentation-per-country',
+                            figure={},  
                             config={'displayModeBar': False } 
                             ),
                           ] 
@@ -566,7 +508,9 @@ dbc.Tab(
         # footer
     dbc.Row(
             [
-                dbc.Col(html.Div("@galaxydataanalytics "),
+                dbc.Col(
+
+                	html.Div("@galaxydataanalytics "),
                   style={
             'margin-top': '2px',
             'text-align':'center',
@@ -594,3 +538,30 @@ label="Customer Segmentation with K-Means Clustering Model"), # Ml Modeling  Tab
 	fluid=True
 	)
 
+
+
+@app.callback(
+  Output('customer-segmentation-per-country', 'figure'), 
+  Input('country-input','value'),
+  )
+def customer_distribution_per_country(countries):
+	country_df=df[df['Country'].isin(countries)]
+	country_df=country_df[['Country','CustomerID']].drop_duplicates()
+	customer_count_df=country_df.groupby( ["Country"], as_index=False )["CustomerID"].count().sort_values(by="CustomerID",ascending=False)
+	customer_count_df.columns=['Country','Customers']
+	fig=px.bar(customer_count_df.head(10),x='Country',y='Customers',text='Customers',color='Country',title='Customers Distribution per Top 10 Countries')
+	fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+	return fig
+
+@app.callback(
+  Output('customer-revenue-segmentation-per-country', 'figure'), 
+  Input('country-input','value'),
+  )
+def renevue_dist_by_country(countries):
+	country_df=df[df['Country'].isin(countries)]
+	revenue_per_country_df=country_df.groupby( ["Country"], as_index=False )["TotalSales"].sum().sort_values(by="TotalSales",ascending=False)
+	revenue_per_country_df.columns=['Country','TotalSales']
+	revenue_per_country_df=round(revenue_per_country_df,2)
+	fig=px.bar(revenue_per_country_df.head(10),x='Country',y='TotalSales',text='TotalSales',color='Country',title='Revenue Distribution per Top 10 Countries')
+	fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+	return fig
