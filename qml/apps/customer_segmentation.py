@@ -2,8 +2,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_uploader as du
-import uuid
+import dash_table
 import pathlib
 import dash_bootstrap_components as dbc
 import plotly.figure_factory as ff
@@ -146,7 +145,7 @@ def monetary_score (quantiles):
     else:
         return 4
 
-def prepare_rfm_data(df):
+def rfm_model(df):
 	last_order_date=df['Date'].max()
 	rfm = df.groupby('CustomerID').agg({'Date': lambda x: (last_order_date - x.max()).days, 'InvoiceNo': lambda x: len(x), 'TotalSales': lambda x: x.sum()}).reset_index()
 	rfm.rename(columns={'Date': 'Recency','InvoiceNo': 'Frequency','TotalSales': 'Monetary'}, inplace=True)
@@ -159,7 +158,7 @@ def prepare_rfm_data(df):
 	rfm['rfm_catrgory'] = pd.qcut(rfm.rfm_score, q = 4, labels = ['Platinum', 'Gold', 'Silver', 'Bronze']).values
 	return rfm
 
-rfm=prepare_rfm_data(df)
+rfm=rfm_model(df)
 
 def rfm_customer_segments(rfm):
     rfm_category_df=rfm.groupby(["rfm_catrgory"], as_index=False )["CustomerID"].count()
@@ -183,12 +182,33 @@ def plot_rfm_clusters(rfm):
 def plot_3d_rfm_clusters(rfm):
     colors=['grey','gold','orange','brown']
     fig = px.scatter_3d(rfm, x="Recency", y="Frequency", z='rfm_catrgory',color_discrete_sequence=colors,
-                        color='rfm_catrgory', log_y=True, title="RFM Customer Clusters")
+                        color='rfm_catrgory', log_y=True, title="RFM Customer Clusters", height=550)
     fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
     return fig
     
 
-
+def rfm_data_table(rfm):
+	rfm=rfm[['CustomerID','Recency','Frequency','Monetary','rfm_score','rfm_catrgory']]
+	rfm.columns=['Customer','R','F','M','Score','Cluster']
+	rfm['M']=round(rfm['M'],2)
+	rfm_table=dash_table.DataTable(
+                    id='rfm_data_table',
+                    columns=[{"name": i, "id": i} for i in rfm.columns],
+                    data=rfm.to_dict('records'),
+                    editable=True,
+                    filter_action="native",
+                    sort_action="native",
+                    sort_mode="multi",
+                    column_selectable="single",
+                    row_selectable="multi",
+                    row_deletable=True,
+                    selected_columns=[],
+                    selected_rows=[],
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 15,
+                    )
+	return  rfm_table
 
 
 layout=dbc.Container([
@@ -368,6 +388,13 @@ dbc.Tab(
 
           dbc.Row(  
             [ 
+            dbc.Col(
+            		html.Div(rfm_data_table(rfm)),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=4),
+
             dbc.Col(html.Div([                  
                     dcc.Graph(
                             id='plot-3d-rfm-clusters',
@@ -377,9 +404,10 @@ dbc.Tab(
                           ] 
                           ),
                           style={
-                                'margin-top': '30px'
+                                'margin-top': '30px',
+                                'height':'550px'
                                 },
-                          md=12),
+                          md=8),
             ]
         ),
 
