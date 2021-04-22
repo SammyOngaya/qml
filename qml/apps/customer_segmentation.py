@@ -194,6 +194,46 @@ def rfm_data_table(rfm):
                     )
 	return  rfm_table
 
+############# K-MEANS==========
+def handle_neg_n_zero(num):
+    if num <= 0:
+        return 1
+    else:
+        return num
+        
+def rfm_data_standardization(rfm):
+	rfm['Recency'] = [handle_neg_n_zero(x) for x in rfm.Recency]
+	rfm['Monetary'] = [handle_neg_n_zero(x) for x in rfm.Monetary]
+	rfm_log_tfd = rfm[['Recency', 'Frequency', 'Monetary']].apply(np.log, axis = 1).round(3)
+	std_scale = StandardScaler()
+	scaled_data = std_scale.fit_transform(rfm_log_tfd)
+	rfm_scaled = pd.DataFrame(scaled_data, index = rfm_log_tfd.index, columns = rfm_log_tfd.columns)
+	return rfm_scaled
+
+rfm_scaled=rfm_data_standardization(rfm)
+
+def no_of_clusters(rfm_scaled):
+    clusters = {}
+    for k in range(1,20):
+        km = KMeans(n_clusters= k, init= 'k-means++', max_iter= 1000)
+        km = km.fit(rfm_scaled)
+        clusters[k] = km.inertia_
+    return clusters
+
+clusters=no_of_clusters(rfm_scaled)
+
+def plot_no_of_clusters(clusters):
+    x=list(clusters.keys())
+    y=list(clusters.values())
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=y,
+                                    line = dict(color='teal', width=2),line_shape='spline'))
+    fig.update_layout(title={'text': 'Number of Clusters Using Elbow Method','y':0.9,'x':0.5, 'xanchor': 'center','yanchor': 'top'},
+                              legend=dict(yanchor="bottom",y=0.05,xanchor="right",x=0.95),autosize=True,margin=dict(t=70,b=0,l=0,r=0))
+    return fig
+    
+
+
 
 layout=dbc.Container([
 
@@ -385,10 +425,10 @@ dbc.Tab(
     #1.
         dbc.Row(
             [ 
-            dbc.Col(html.Div([                  
+                dbc.Col(html.Div([                  
                     dcc.Graph(
                             id='feature-correlation',
-                            # figure=feature_correlation(df),
+                            figure=plot_no_of_clusters(clusters),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -396,7 +436,20 @@ dbc.Tab(
                           style={
                                 'margin-top': '30px'
                                 },
-                          md=12),
+                          md=6),
+
+            dbc.Col(html.Div([                  
+                    dcc.Graph(
+                            id='feature-correlation',
+                            # figure=plot_no_of_clusters(clusters),
+                            config={'displayModeBar': False }
+                            ),
+                          ] 
+                          ),
+                          style={
+                                'margin-top': '30px'
+                                },
+                          md=6),
 
             ]
         ),
