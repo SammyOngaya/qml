@@ -232,7 +232,56 @@ def plot_no_of_clusters(clusters):
                               legend=dict(yanchor="bottom",y=0.05,xanchor="right",x=0.95),autosize=True,margin=dict(t=70,b=0,l=0,r=0))
     return fig
     
+def asign_kmeans_cluster(rfm):
+    category=[]
+    for index, row in rfm.iterrows():
+        if row['Kmeans Cluster']==0:
+            category.append('One')
+        elif row['Kmeans Cluster']==1:
+            category.append('Two')
+        elif row['Kmeans Cluster']==2:
+            category.append('Three')
+        else:
+            category.append('Four')
+    rfm['Kmeans Cluster Category']=category
+    return rfm
 
+
+def train_model(rfm_scaled,rfm):
+	kmeans_model = KMeans(n_clusters= 4, init= 'k-means++', max_iter= 1000)
+	kmeans_model.fit(rfm_scaled)
+	rfm['Kmeans Cluster'] = kmeans_model.labels_
+	rfm=asign_kmeans_cluster(rfm)
+	return rfm
+
+kmeans_rfm=train_model(rfm_scaled,rfm)
+
+
+
+def kmeans_customer_segments(kmeans_rfm):
+    rfm_category_df=kmeans_rfm.groupby(["Kmeans Cluster Category"], as_index=False )["CustomerID"].count()
+    rfm_category_df=rfm_category_df.sort_values(by=['CustomerID'],ascending=False)
+    rfm_category_df.columns=['Clusters','No. Customers']
+    colors=['gold','orange','grey','brown']
+    fig=px.bar(rfm_category_df,x='Clusters',y='No. Customers',text='No. Customers',color='Clusters',
+               color_discrete_sequence=colors,title='Kmeans Customer Segments')
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
+
+def plot_clusters(kmeans_rfm):
+    colors=['orange','grey','gold','brown']
+    fig = px.scatter(kmeans_rfm, x="Recency", y="Frequency", color="Kmeans Cluster Category",color_discrete_sequence=colors,
+                     hover_data=['Kmeans Cluster'], log_y=True,title="Customer Clusters")
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
+    
+
+def plot_3d_clusters(kmeans_rfm):
+    colors=['orange','grey','gold','brown']
+    fig = px.scatter_3d(kmeans_rfm, x="Recency", y="Frequency", z='Kmeans Cluster',color_discrete_sequence=colors,
+                        color='Kmeans Cluster Category', log_y=True,title="Customer Clusters")
+    fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.8),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
+    return fig
 
 
 layout=dbc.Container([
@@ -427,7 +476,7 @@ dbc.Tab(
             [ 
                 dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='feature-correlation',
+                            id='plot-no-of-clusters',
                             figure=plot_no_of_clusters(clusters),
                             config={'displayModeBar': False }
                             ),
@@ -440,8 +489,8 @@ dbc.Tab(
 
             dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='feature-correlation',
-                            # figure=plot_no_of_clusters(clusters),
+                            id='kmeans-customer-segments',
+                            figure=kmeans_customer_segments(kmeans_rfm),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -459,8 +508,8 @@ dbc.Tab(
             [ 
             dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='feature-importance',
-                            # figure=feature_importance(feat_importance_df),
+                            id='plot-clusters',
+                            figure=plot_clusters(kmeans_rfm),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -473,78 +522,12 @@ dbc.Tab(
             ]
         ),
 
-         dbc.Row(
-            [ 
-             dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='uac-roc',
-                            # figure=uac_roc(telco_churm_metrics_df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=6),
-
-            dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='random-forest-confusion-matrix',
-                            # figure=random_forest_confusion_matrix(telco_churm_metrics_df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=6),
-            ]
-        ),
-
-
-    dbc.Row(
-            [ 
-
-
-            dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='logistic-regression-confusion-matrix',
-                            # figure=logistic_regression_confusion_matrix(telco_churm_metrics_df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=6),
-
-             dbc.Col(html.Div([                  
-                    dcc.Graph(
-                            id='svm-confusion-matrix',
-                            # figure=svm_confusion_matrix(telco_churm_metrics_df),
-                            config={'displayModeBar': False }
-                            ),
-                          ] 
-                          ),
-                          style={
-                                'margin-top': '30px'
-                                },
-                          md=6),
-            ]
-        ),
-
-
-
-
-  dbc.Row(
+       dbc.Row(
             [ 
             dbc.Col(html.Div([                  
                     dcc.Graph(
-                            id='telco-churn-model-metrics-summary',
-                            # figure=telco_churn_model_metrics_summary(telco_churm_metrics_df),
+                            id='plot-3d-clusters',
+                            figure=plot_3d_clusters(kmeans_rfm),
                             config={'displayModeBar': False }
                             ),
                           ] 
@@ -553,8 +536,11 @@ dbc.Tab(
                                 'margin-top': '30px'
                                 },
                           md=12),
+
             ]
         ),
+
+    
 
 
        
