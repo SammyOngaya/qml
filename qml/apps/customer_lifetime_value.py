@@ -369,6 +369,7 @@ html.Hr(),
   )
 def customer_distribution_per_country(countries):
     country_df=df[df['Country'].isin(countries)]
+    country_df=country_df[['Country','CustomerID']].drop_duplicates()
     customer_count_df=country_df.groupby( ["Country"], as_index=False )["CustomerID"].count().sort_values(by="CustomerID",ascending=False)
     customer_count_df.columns=['Country','Customers']
     fig=px.bar(customer_count_df.head(10),x='Country',y='Customers',text='Customers',color='Country',title='Top 10 Customers Distribution per Country')

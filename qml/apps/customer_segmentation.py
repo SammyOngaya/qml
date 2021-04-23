@@ -462,13 +462,11 @@ dbc.Tab(
             'padding-right': '3px'
             },
 ),
-	#End  Explore Data Body
-label="Customer Segmentation with RFM Model"), # Explore Data  Tab Name
+	#End  Explore RFM Body
+label="Customer Segmentation with RFM Model"), 
 
-
-# Ml Modeling Tab
+# Customer Segmentation
 dbc.Tab(
-  # Ml Modeling Body
    html.Div(
     [
     #1.
@@ -565,8 +563,8 @@ dbc.Tab(
             'padding-right': '3px'
             },
 ),
-  #End  Ml Modeling Body
-label="Customer Segmentation with K-Means Clustering Model"), # Ml Modeling  Tab Name
+  #End  Ml kmeans Clustering Body
+label="Customer Segmentation with K-Means Clustering Model"), # KMeans  Tab Name
 
 
 
