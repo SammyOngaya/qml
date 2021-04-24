@@ -1,0 +1,28 @@
+,Country,CustomerID,TotalSales,Country Code
+0,Australia,9,138521.31,AUS
+1,Austria,11,10198.68,AUT
+2,Bahrain,2,548.4,BHR
+3,Belgium,25,41196.34,BEL
+4,Brazil,1,1143.6,BRA
+5,Canada,4,3666.38,CAN
+6,Czech Republic,1,826.74,CZE
+7,Denmark,9,18955.34,DNK
+8,Finland,12,22546.08,FIN
+9,France,87,209024.05,FRA
+10,Germany,94,228867.14,DEU
+11,Greece,4,4760.52,GRC
+12,Iceland,1,4310.0,ISL
+13,Israel,3,7221.69,ISR
+14,Italy,14,17483.24,ITA
+15,Japan,8,37416.37,JPN
+16,Lebanon,1,1693.88,LBN
+17,Netherlands,9,285446.34,NLD
+18,Norway,10,36165.44,NOR
+19,Poland,6,7334.65,POL
+20,Portugal,19,33439.89,PRT
+21,Saudi Arabia,1,145.92,SAU
+22,Singapore,1,21279.29,SGP
+23,Spain,30,61577.11,ESP
+24,Sweden,8,38378.33,SWE
+25,Switzerland,21,56443.95,CHE
+26,United Kingdom,3921,7308391.55,GBR

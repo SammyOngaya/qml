@@ -13,9 +13,9 @@ import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 px.defaults.template = "ggplot2"
-plt.style.use('ggplot')
+# plt.style.use('ggplot')
 # End Dash dependencies import
 
 from sklearn.preprocessing import StandardScaler
@@ -23,57 +23,62 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 
 
-
-import os
-import io
-import shutil
-
 from app import app, server
 
 
 PATH=pathlib.Path(__file__).parent
 DATA_PATH=PATH.joinpath("../datasets").resolve()
-df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail.csv"),encoding="cp1252")
-
-def clean_data(df):
-	df = df[pd.notnull(df['CustomerID'])]
-	df=df[df['Quantity']>0]
-	df['CustomerID'] = df['CustomerID'].astype(int)
-	df['CustomerID'] = df['CustomerID'].astype(str) 
-	df['Date'] = pd.to_datetime(df['InvoiceDate'], format="%d/%m/%Y %H:%M").dt.date
-	df['TotalSales']=df['Quantity']*df['UnitPrice']
-	df['TotalSales']=round(df['TotalSales'],2)
-	return df
-df=clean_data(df)
+DATA_SUMMARY_PATH=PATH.joinpath("../datasets/customer_segmentation").resolve()
+customer_country_df=pd.read_csv(DATA_SUMMARY_PATH.joinpath("customer_country_df.csv"))  
+customer_count_df=pd.read_csv(DATA_SUMMARY_PATH.joinpath("customer_count_df.csv")) 
+revenue_per_country_df=pd.read_csv(DATA_SUMMARY_PATH.joinpath("revenue_per_country_df.csv"))
+rfm=pd.read_csv(DATA_SUMMARY_PATH.joinpath("rfm.csv"))
 
 
-def customer_country(df):
-    customer_country_count_df=df[['Country','CustomerID']].drop_duplicates()
-    customer_country_count_df=customer_country_count_df.groupby( ["Country"], as_index=False )["CustomerID"].count()
-    customer_country_revenue_df=df.groupby( ["Country"], as_index=False )["TotalSales"].sum()
-    customer_country_revenue_df.columns=['Country','TotalSales']
-    customer_country_revenue_df=round(customer_country_revenue_df,2)
-    customer_country_df=pd.concat([customer_country_count_df,customer_country_revenue_df],axis=1)
-    # Merge two dataframes
-    customer_country_df=pd.merge(customer_country_count_df,customer_country_revenue_df, on="Country")
-    # Get Country Code from a nother dataset gapminder
-    country_iso_df = px.data.gapminder()
-    country_iso_df=country_iso_df[['country','iso_alpha']]
-    country_iso_df=country_iso_df.drop_duplicates(subset=['country'])
-    country_iso_df.columns=['Country','Country Code']
-    #Merge the two datasets
-    customer_country_df=pd.merge(customer_country_df,country_iso_df, on="Country")
-    customer_country_df['CustomerID'] = customer_country_df['CustomerID'].astype(str) 
-    return customer_country_df
+# data_df=pd.read_csv(DATA_PATH.joinpath("Customer Lifetime Value Online Retail.csv"),encoding="cp1252")
 
-customer_country_df=customer_country(df)
+# def clean_data(data_df):
+# 	data_df = data_df[pd.notnull(data_df['CustomerID'])]
+# 	data_df=data_df[data_df['Quantity']>0]
+# 	data_df['CustomerID'] = data_df['CustomerID'].astype(int)
+# 	data_df['CustomerID'] = data_df['CustomerID'].astype(str) 
+# 	data_df['Date'] = pd.to_datetime(data_df['InvoiceDate'], format="%d/%m/%Y %H:%M").dt.date
+# 	data_df['TotalSales']=data_df['Quantity']*data_df['UnitPrice']
+# 	data_df['TotalSales']=round(data_df['TotalSales'],2)
+# 	return data_df
+# df=clean_data(data_df)
+
+
+
+# def customer_country(df):
+#     customer_country_count_df=df[['Country','CustomerID']].drop_duplicates()
+#     customer_country_count_df=customer_country_count_df.groupby( ["Country"], as_index=False )["CustomerID"].count()
+#     customer_country_revenue_df=df.groupby( ["Country"], as_index=False )["TotalSales"].sum()
+#     customer_country_revenue_df.columns=['Country','TotalSales']
+#     customer_country_revenue_df=round(customer_country_revenue_df,2)
+#     customer_country_df=pd.concat([customer_country_count_df,customer_country_revenue_df],axis=1)
+#     # Merge two dataframes
+#     customer_country_df=pd.merge(customer_country_count_df,customer_country_revenue_df, on="Country")
+#     # Get Country Code from a nother dataset gapminder
+#     country_iso_df = px.data.gapminder()
+#     country_iso_df=country_iso_df[['country','iso_alpha']]
+#     country_iso_df=country_iso_df.drop_duplicates(subset=['country'])
+#     country_iso_df.columns=['Country','Country Code']
+#     #Merge the two datasets
+#     customer_country_df=pd.merge(customer_country_df,country_iso_df, on="Country")
+#     customer_country_df['CustomerID'] = customer_country_df['CustomerID'].astype(str) 
+#     return customer_country_df
+
+# customer_country_df=customer_country(df)
 
 def customer_geosegmentation(customer_country_df):
-    customer_country_df=customer_country_df[customer_country_df['Country']!='United Kingdom'] # remove UK since it's a dominant country in the dataset
+    df=customer_country_df[customer_country_df['Country']!='United Kingdom'] # remove UK since it's a dominant country in the dataset
+    df['CustomerID'] = df['CustomerID'].astype(int)
+    df['CustomerID'] = df['CustomerID'].astype(str) 
     fig = go.Figure(data=go.Choropleth(
-        locations = customer_country_df['Country Code'],
-        z = customer_country_df['TotalSales'],
-        text = "Customers : "+customer_country_df['CustomerID']+"<br>Country : "+customer_country_df['Country'],
+        locations = df['Country Code'],
+        z = df['TotalSales'],
+        text = "Customers : "+df['CustomerID']+"<br>Country : "+df['Country'],
         colorscale = 'Blues',
         autocolorscale=True,
         reversescale=True,
@@ -99,50 +104,50 @@ def customer_geosegmentation(customer_country_df):
 
 ## RFM
 
-def recency_score (quantiles):
-    if quantiles <= 17:
-        return 1
-    elif quantiles <= 50:
-        return 2
-    elif quantiles <= 141.5:
-        return 3
-    else:
-        return 4
+# def recency_score (quantiles):
+#     if quantiles <= 17:
+#         return 1
+#     elif quantiles <= 50:
+#         return 2
+#     elif quantiles <= 141.5:
+#         return 3
+#     else:
+#         return 4
 
-def frequency_score (quantiles):
-    if quantiles <= 17:
-        return 1
-    elif quantiles <= 41:
-        return 2
-    elif quantiles <= 100:
-        return 3
-    else:
-        return 4
+# def frequency_score (quantiles):
+#     if quantiles <= 17:
+#         return 1
+#     elif quantiles <= 41:
+#         return 2
+#     elif quantiles <= 100:
+#         return 3
+#     else:
+#         return 4
 
-def monetary_score (quantiles):
-    if quantiles <= 307.245:
-        return 1
-    elif quantiles <= 674.450:
-        return 2
-    elif quantiles <= 1661.640:
-        return 3
-    else:
-        return 4
+# def monetary_score (quantiles):
+#     if quantiles <= 307.245:
+#         return 1
+#     elif quantiles <= 674.450:
+#         return 2
+#     elif quantiles <= 1661.640:
+#         return 3
+#     else:
+#         return 4
 
-def rfm_model(df):
-	last_order_date=df['Date'].max()
-	rfm = df.groupby('CustomerID').agg({'Date': lambda x: (last_order_date - x.max()).days, 'InvoiceNo': lambda x: len(x), 'TotalSales': lambda x: x.sum()}).reset_index()
-	rfm.rename(columns={'Date': 'Recency','InvoiceNo': 'Frequency','TotalSales': 'Monetary'}, inplace=True)
-	quantiles = rfm.quantile(q=[0.25,0.5,0.75])
-	rfm['R'] = rfm['Recency'].apply(recency_score )
-	rfm['F'] = rfm['Frequency'].apply(frequency_score)
-	rfm['M'] = rfm['Monetary'].apply(monetary_score)
-	rfm['rfm_group'] = rfm.R.map(str) + rfm.F.map(str) + rfm.M.map(str)
-	rfm['rfm_score'] = rfm[['R', 'F', 'M']].sum(axis=1)
-	rfm['rfm_catrgory'] = pd.qcut(rfm.rfm_score, q = 4, labels = ['Platinum', 'Gold', 'Silver', 'Bronze']).values
-	return rfm
+# def rfm_model(df):
+# 	last_order_date=df['Date'].max()
+# 	rfm = df.groupby('CustomerID').agg({'Date': lambda x: (last_order_date - x.max()).days, 'InvoiceNo': lambda x: len(x), 'TotalSales': lambda x: x.sum()}).reset_index()
+# 	rfm.rename(columns={'Date': 'Recency','InvoiceNo': 'Frequency','TotalSales': 'Monetary'}, inplace=True)
+# 	quantiles = rfm.quantile(q=[0.25,0.5,0.75])
+# 	rfm['R'] = rfm['Recency'].apply(recency_score )
+# 	rfm['F'] = rfm['Frequency'].apply(frequency_score)
+# 	rfm['M'] = rfm['Monetary'].apply(monetary_score)
+# 	rfm['rfm_group'] = rfm.R.map(str) + rfm.F.map(str) + rfm.M.map(str)
+# 	rfm['rfm_score'] = rfm[['R', 'F', 'M']].sum(axis=1)
+# 	rfm['rfm_catrgory'] = pd.qcut(rfm.rfm_score, q = 4, labels = ['Platinum', 'Gold', 'Silver', 'Bronze']).values
+# 	return rfm
 
-rfm=rfm_model(df)
+# rfm=rfm_model(df)
 
 def rfm_customer_segments(rfm):
     rfm_category_df=rfm.groupby(["rfm_catrgory"], as_index=False )["CustomerID"].count()
@@ -325,8 +330,8 @@ dbc.Tab(
             style={'margin-top': '15px'}, md=2),
 
             dbc.Col(
-				      dcc.Dropdown(id='country-input',multi=True, value=df['Country'].unique()[1:11],
-				      options=[{'label':x,'value':x} for x in sorted(df['Country'].unique())],
+				      dcc.Dropdown(id='country-input',multi=True, value=customer_country_df['Country'].unique()[1:11],
+				      options=[{'label':x,'value':x} for x in sorted(customer_country_df['Country'].unique())],
 				      style={'margin-top': '15px'}),
 
             	 md=10),
@@ -582,11 +587,11 @@ label="Customer Segmentation with K-Means Clustering Model"), # KMeans  Tab Name
   Input('country-input','value'),
   )
 def customer_distribution_per_country(countries):
-	country_df=df[df['Country'].isin(countries)]
-	country_df=country_df[['Country','CustomerID']].drop_duplicates()
-	customer_count_df=country_df.groupby( ["Country"], as_index=False )["CustomerID"].count().sort_values(by="CustomerID",ascending=False)
-	customer_count_df.columns=['Country','Customers']
-	fig=px.bar(customer_count_df.head(10),x='Country',y='Customers',text='Customers',color='Country',title='Customers Distribution per Top 10 Countries')
+	country_customer_df=customer_count_df[customer_count_df['Country'].isin(countries)]
+	# country_df=country_df[['Country','CustomerID']].drop_duplicates()
+	# customer_count_df=country_df.groupby( ["Country"], as_index=False )["CustomerID"].count().sort_values(by="CustomerID",ascending=False)
+	# customer_count_df.columns=['Country','Customers']
+	fig=px.bar(country_customer_df.head(10),x='Country',y='Customers',text='Customers',color='Country',title='Customers Distribution per Top 10 Countries')
 	fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
 	return fig
 
@@ -595,10 +600,11 @@ def customer_distribution_per_country(countries):
   Input('country-input','value'),
   )
 def renevue_dist_by_country(countries):
-	country_df=df[df['Country'].isin(countries)]
-	revenue_per_country_df=country_df.groupby( ["Country"], as_index=False )["TotalSales"].sum().sort_values(by="TotalSales",ascending=False)
-	revenue_per_country_df.columns=['Country','TotalSales']
-	revenue_per_country_df=round(revenue_per_country_df,2)
-	fig=px.bar(revenue_per_country_df.head(10),x='Country',y='TotalSales',text='TotalSales',color='Country',title='Revenue Distribution per Top 10 Countries')
+	df=revenue_per_country_df[revenue_per_country_df['Country'].isin(countries)]
+	# revenue_per_country_df=country_df.groupby( ["Country"], as_index=False )["TotalSales"].sum().sort_values(by="TotalSales",ascending=False)
+	# revenue_per_country_df.columns=['Country','TotalSales']
+	# revenue_per_country_df=round(revenue_per_country_df,2)
+	fig=px.bar(df.head(10),x='Country',y='TotalSales',text='TotalSales',color='Country',title='Revenue Distribution per Top 10 Countries')
 	fig.update_layout(legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.7),autosize=True,margin=dict(t=30,b=0,l=0,r=0))
 	return fig
+

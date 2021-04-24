@@ -85,15 +85,7 @@ def kmf_model_cumulative_density(kmf_df):
                               legend=dict(yanchor="bottom",y=0.80,xanchor="right",x=0.95),autosize=True,margin=dict(t=70,b=0,l=0,r=0))
     return fig
 
-# def compute_kmf_log_plot(kmf):  
-#     kmf_log_fig = plt.figure(figsize=(9,9))
-#     kmf_log_fig=kmf.plot_loglogs()
-#     kmf_log_img = BytesIO()
-#     kmf_log_fig.figure.savefig(kmf_log_img, format='PNG')
-# #     plt.close()
-#     kmf_log_img.seek(0)
-# #     return 'data:image/png;base64,{}'.format(base64.b64encode(kmf_log_img.getvalue()).decode()) # Uncomment when using on plotly Dash
-#     return  kmf_log_fig
+
   
 def kmf_overral_data_table(kmf_df):
     kmf_df=kmf_df[['timeline','Kaplan Meier Estimate','Kaplan Meier Estimate Density']]
