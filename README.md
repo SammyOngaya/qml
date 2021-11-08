@@ -43,7 +43,7 @@ The use-case is hosted here <a href="https://qaml.herokuapp.com/apps/customer_li
 ![Customer Lifetime Value](https://raw.githubusercontent.com/SammyOngaya/qml/main/qml/assets/customer_lifetime_value/customer-lifetime-value.PNG)
 
 
-### <a href="https://qaml.herokuapp.com/apps/telco_customer_survival_analysis" target="blank">2. Telco Customer Survival Analysis and Prediction</a>
+### <a href="https://qaml.herokuapp.com/apps/telco_customer_survival_analysis" target="blank">3. Telco Customer Survival Analysis and Prediction</a>
 
 In this use-case we develope a survival analysis model using Kaplan Meier and Cox Proportional Harzad regresion model to estimate the survivorship of the telco customer before they churn. Survival analysis is a time-to-event analysis using the survival function.
 
