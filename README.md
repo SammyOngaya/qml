@@ -65,7 +65,7 @@ CPH has an advantage over Kaplan Meier model since;
 2. Also CPH allows us to perform the predictor ranking which enables in identifying the outstanding features that nfluences the survivorship of the individual.
 3. We can use the CPH results to perform the probability of survival of unknown individual given the the data features.
 
-Data
+##### Data
 We use the telco customer churn dataset for our use-case.
 
 Implementation
